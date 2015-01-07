@@ -1,6 +1,4 @@
 import Fraction
+import Gauss
 
-main = print (b / a)
-	where
-		a = 1 % 3
-		b = 2 % 3
+main = print (gaussSortMatrix [[0, 0, 111, 15], [8, 42, 53, 22, 19], [0, 51, 27, 44]])
