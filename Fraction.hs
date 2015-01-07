@@ -9,8 +9,14 @@ infinity = 1 :/ 0
 
 trim :: (Integral a) => a -> a -> Frac a
 trim _ 0 = infinity -- error "Division by zero within fraction"
-trim x y = (x `quot` g) :/ (y `quot` g)
+trim x y = ((x * signum y) `quot` g) :/ ((abs y) `quot` g)
 	where g = gcd x y
+
+numerator :: (Num a) => Frac a -> a
+numerator (x :/ _) = x
+
+denominator :: (Num a) => Frac a -> a
+denominator (_ :/ y) = y
 
 x % y = trim (x * signum y) (abs y)
 
@@ -32,10 +38,15 @@ instance (Integral a) => Fractional (Frac a) where
 	(x :/ y) / (x' :/ y') = trim (x * y') (y * x')
 
 instance (Integral a, Show a) => Show (Frac a) where
-	show (x :/ y)
+	show (a :/ b)
+		| x == 0 = "0"
 		| y == 0 = "infinity"
 		| y == 1 = show x
 		| otherwise = show x ++ "/" ++ show y
+		where
+			x = numerator f
+			y = denominator f
+			f = trim a b
 
 instance (Integral a) => Eq (Frac a) where
 	(x :/ y) == (x' :/ y') = (x * g) == (x' * g)

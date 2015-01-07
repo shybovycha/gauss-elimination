@@ -13,6 +13,9 @@ gaussConvertMatrix :: [ [ Integer ] ] -> Matrix
 gaussConvertMatrix [] = []
 gaussConvertMatrix (r:rs) = (map (\e -> e % 1) r) : (gaussConvertMatrix rs)
 
+gaussReverseMatrix :: Matrix -> Matrix
+gaussReverseMatrix = foldl (flip (:)) []
+
 quicksort :: (Ord a) => [a] -> (a -> a -> Int) -> [a]
 quicksort [] _ = []
 quicksort (x:xs) cmp = (quicksort lesser cmp) ++ [x] ++ (quicksort greater cmp)
@@ -41,3 +44,19 @@ gaussMakeZero r1 r2 = map (\pair -> ((fst pair) * factor) + (snd pair)) (zip r1 
 gaussReduce :: Matrix -> Matrix
 gaussReduce [] = []
 gaussReduce (r1:rs) = r1 : (gaussReduce (map (gaussMakeZero r1) rs))
+
+gaussFixCoefficients :: Matrix -> Matrix
+gaussFixCoefficients [] = []
+gaussFixCoefficients (r:rs) = (map (\e -> e / factor) r) : (gaussFixCoefficients rs)
+	where
+		index = leadingZeros r
+		factor = r !! index
+
+gaussExtractResults :: Matrix -> Row
+gaussExtractResults mat = map last mat
+
+gaussSolve :: Matrix -> Row
+gaussSolve mat = gaussExtractResults (gaussFixCoefficients (gaussReduce (gaussReverseMatrix (gaussReduce mat))))
+
+gaussSolveList :: [[Integer]] -> Row
+gaussSolveList mat = gaussSolve (gaussConvertMatrix mat)
