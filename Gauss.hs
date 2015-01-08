@@ -13,8 +13,8 @@ gaussConvertMatrix :: [ [ Integer ] ] -> Matrix
 gaussConvertMatrix [] = []
 gaussConvertMatrix (r:rs) = (map (\e -> e % 1) r) : (gaussConvertMatrix rs)
 
-gaussReverseMatrix :: Matrix -> Matrix
-gaussReverseMatrix = foldl (flip (:)) []
+-- gaussReverseMatrix :: Matrix -> Matrix
+-- reverse = foldl (flip (:)) []
 
 quicksort :: (Ord a) => [a] -> (a -> a -> Int) -> [a]
 quicksort [] _ = []
@@ -52,11 +52,24 @@ gaussFixCoefficients (r:rs) = (map (\e -> e / factor) r) : (gaussFixCoefficients
 		index = leadingZeros r
 		factor = r !! index
 
-gaussExtractResults :: Matrix -> Row
-gaussExtractResults mat = map last mat
+gaussShowVars :: Row -> String
+gaussShowVars r = if (length other_coefficients) > 0 then (var_str ++ other_vars_str) else var_str
+	where
+		index = leadingZeros r
+		koefficient = r !! index
+		value = head (reverse r)
+		raw_row = reverse (drop 1 (reverse r))
+		elements_count = length raw_row
+		other_coefficients = filter (\pair -> (fst pair) /= 0 && ((snd pair) - 1) /= index) (zip raw_row [1..elements_count])
+		other_vars_str = foldr (\s e -> e ++ " - " ++ s) "" (map (\pair -> (show (fst pair)) ++ " * var_" ++ (show (snd pair))) other_coefficients)
+		var_str = "var_" ++ (show (index + 1)) ++ " = " ++ (show (value / koefficient))
 
-gaussSolve :: Matrix -> Row
-gaussSolve mat = gaussExtractResults (gaussFixCoefficients (gaussReduce (gaussReverseMatrix (gaussReduce mat))))
+gaussExtractResults :: Matrix -> String
+gaussExtractResults [] = []
+gaussExtractResults (r:rs) = (gaussShowVars r) ++ "\n" ++ gaussExtractResults rs
 
-gaussSolveList :: [[Integer]] -> Row
+gaussSolve :: Matrix -> Matrix
+gaussSolve mat = gaussFixCoefficients (reverse (gaussReduce (reverse (gaussReduce mat))))
+
+gaussSolveList :: [[Integer]] -> Matrix
 gaussSolveList mat = gaussSolve (gaussConvertMatrix mat)
