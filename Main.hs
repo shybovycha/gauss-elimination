@@ -1,4 +1,4 @@
 import Fraction
 import Gauss
 
-main = print (gaussSortMatrix [[0, 0, 111, 15], [8, 42, 53, 22, 19], [0, 51, 27, 44]])
+main = putStrLn (gaussExtractResults (gaussSolveList [[3,2,3,4,0], [2,5,7,1,-2], [3,4,1,9,5]]))

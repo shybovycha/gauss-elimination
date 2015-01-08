@@ -13,9 +13,6 @@ gaussConvertMatrix :: [ [ Integer ] ] -> Matrix
 gaussConvertMatrix [] = []
 gaussConvertMatrix (r:rs) = (map (\e -> e % 1) r) : (gaussConvertMatrix rs)
 
--- gaussReverseMatrix :: Matrix -> Matrix
--- reverse = foldl (flip (:)) []
-
 quicksort :: (Ord a) => [a] -> (a -> a -> Int) -> [a]
 quicksort [] _ = []
 quicksort (x:xs) cmp = (quicksort lesser cmp) ++ [x] ++ (quicksort greater cmp)
@@ -61,7 +58,8 @@ gaussShowVars r = if (length other_coefficients) > 0 then (var_str ++ other_vars
 		raw_row = reverse (drop 1 (reverse r))
 		elements_count = length raw_row
 		other_coefficients = filter (\pair -> (fst pair) /= 0 && ((snd pair) - 1) /= index) (zip raw_row [1..elements_count])
-		other_vars_str = foldr (\s e -> e ++ " - " ++ s) "" (map (\pair -> (show (fst pair)) ++ " * var_" ++ (show (snd pair))) other_coefficients)
+		subtract_coefficient = (\k -> if k < 0 then (" + " ++ show (-k)) else (" - " ++ (show k)))
+		other_vars_str = concat (map (\pair -> (subtract_coefficient (fst pair)) ++ " * var_" ++ (show (snd pair))) other_coefficients)
 		var_str = "var_" ++ (show (index + 1)) ++ " = " ++ (show (value / koefficient))
 
 gaussExtractResults :: Matrix -> String
