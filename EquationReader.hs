@@ -120,9 +120,9 @@ parseRow (c:cs) state coefficients var_names
 	| otherwise = parseRow cs state coefficients var_names
 	where
 		k = abs $ head coefficients
-		k_sign = sign k
+		k_sign = sign (head coefficients)
 		c_int = atoi c
 		new_k = ((k * k_sign * 10) + c_int)
-		repl_k = (sign k) * c_int
+		repl_k = k_sign * c_int
 		v = if (length var_names) > 0 then head var_names else []
 		new_v = v ++ [c]
