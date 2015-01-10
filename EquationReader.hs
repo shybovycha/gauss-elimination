@@ -96,30 +96,33 @@ parseRow (c:cs) coefficients var_names state
 
 parseRow :: String -> Integer -> [Integer] -> [String] -> ([Integer], [String])
 parseRow [] state coefficients var_names
-	| state == 6 = ((reverse coefficients), (reverse var_names))
+	| state == 7 = ((reverse coefficients), (reverse var_names))
 	| otherwise = error ("Invalid equation (state: " ++ (show state) ++ "; coefficients: " ++ (show coefficients) ++ "; var_names: " ++ (show var_names) ++ ")")
 
 parseRow (c:cs) state coefficients var_names
 	| (state == 1) && (c == '-') = parseRow cs 2 ((-1) : coefficients) var_names
-	| (state == 1) && (isNum c) = parseRow cs 2 (new_k : (drop 1 coefficients)) var_names
-	| (state == 1) && (isAlpha c) = parseRow cs 3 coefficients ([c] : var_names)
-	| (state == 2) && (isNum c) = parseRow cs 2 (new_k : (drop 1 coefficients)) var_names
-	| (state == 2) && (c == '*') = parseRow cs 2 coefficients var_names
-	| (state == 2) && (c == '=') = parseRow cs 4 coefficients var_names
-	| (state == 2) && (isAlpha c) = parseRow cs 3 coefficients (new_v : (drop 1 var_names))
-	| (state == 3) && (c == '-') = parseRow cs 2 ((-1) : coefficients) var_names
-	| (state == 3) && (c == '+') = parseRow cs 2 (1 : coefficients) var_names
-	| (state == 3) && (isAlphaNum c) = parseRow cs 3 coefficients (new_v : (drop 1 var_names))
-	| (state == 3) && (c == '=') = parseRow cs 4 coefficients var_names
-	| (state == 4) && (c == '-') = parseRow cs 5 ((-1) : coefficients) var_names
-	| (state == 4) && (isNum c) = parseRow cs 6 (new_k : (drop 1 coefficients)) var_names
-	| (state == 5) && (isNum c) = parseRow cs 6 (new_k : (drop 1 coefficients)) var_names
-	| (state == 6) && (isNum c) = parseRow cs 6 (new_k : (drop 1 coefficients)) var_names
+	| (state == 1) && (isNum c) = parseRow cs 3 (c_int : coefficients) var_names
+	| (state == 1) && (isAlpha c) = parseRow cs 4 coefficients ([c] : var_names)
+	| (state == 2) && (isNum c) = parseRow cs 3 (repl_k : (drop 1 coefficients)) var_names
+	| (state == 2) && (isAlpha c) = parseRow cs 4 coefficients ([c] : var_names)
+	| (state == 3) && (c == '*') = parseRow cs 4 coefficients var_names
+	| (state == 3) && (c == '=') = parseRow cs 5 coefficients var_names
+	| (state == 3) && (isAlpha c) = parseRow cs 4 coefficients ([c] : var_names)
+	| (state == 3) && (isNum c) = parseRow cs 3 (new_k : (drop 1 coefficients)) var_names
+	| (state == 4) && (c == '-') = parseRow cs 2 ((-1) : coefficients) var_names
+	| (state == 4) && (c == '+') = parseRow cs 3 (0 : coefficients) var_names
+	| (state == 4) && (isAlphaNum c) = parseRow cs 4 coefficients (new_v : (drop 1 var_names))
+	| (state == 4) && (c == '=') = parseRow cs 5 coefficients var_names
+	| (state == 5) && (c == '-') = parseRow cs 6 ((-1) : coefficients) var_names
+	| (state == 5) && (isNum c) = parseRow cs 7 (c_int : coefficients) var_names
+	| (state == 6) && (isNum c) = parseRow cs 7 (repl_k : (drop 1 coefficients)) var_names
+	| (state == 7) && (isNum c) = parseRow cs 7 (new_k : (drop 1 coefficients)) var_names
 	| otherwise = parseRow cs state coefficients var_names
 	where
 		k = abs $ head coefficients
 		k_sign = sign k
 		c_int = atoi c
-		new_k = if k == 1 then c_int else ((k * k_sign * 10) + c_int)
+		new_k = ((k * k_sign * 10) + c_int)
+		repl_k = (sign k) * c_int
 		v = if (length var_names) > 0 then head var_names else []
 		new_v = v ++ [c]
