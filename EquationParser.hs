@@ -1,9 +1,11 @@
-module EquationReader where
+module EquationParser where
 
 import Fraction
 
-type Row = [ Integer ]
-type Matrix = [ Row ]
+deepEqual lists = foldl1 (&&) $ map (== h) ls
+	where
+		h = head lists
+		ls = drop 1 lists
 
 sign :: Integer -> Integer
 sign x
@@ -46,7 +48,7 @@ parseRow (c:cs) state coefficients var_names
 	| (state == 3) && (isAlpha c) = parseRow cs 4 coefficients ([c] : var_names)
 	| (state == 3) && (isNum c) = parseRow cs 3 (new_k : (drop 1 coefficients)) var_names
 	| (state == 4) && (c == '-') = parseRow cs 2 ((-1) : coefficients) var_names
-	| (state == 4) && (c == '+') = parseRow cs 3 (0 : coefficients) var_names
+	| (state == 4) && (c == '+') = parseRow cs 2 (1 : coefficients) var_names
 	| (state == 4) && (isAlphaNum c) = parseRow cs 4 coefficients (new_v : (drop 1 var_names))
 	| (state == 4) && (c == '=') = parseRow cs 5 coefficients var_names
 	| (state == 5) && (c == '-') = parseRow cs 6 ((-1) : coefficients) var_names

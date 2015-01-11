@@ -49,25 +49,28 @@ gaussFixCoefficients (r:rs) = (map (\e -> e / factor) r) : (gaussFixCoefficients
 		index = leadingZeros r
 		factor = r !! index
 
-gaussShowVars :: Row -> String
-gaussShowVars r = if (length other_coefficients) > 0 then (var_str ++ other_vars_str) else var_str
+gaussShowVars :: Row -> [String] -> String
+gaussShowVars r var_names = if (length other_coefficients) > 0 then (var_str ++ other_vars_str) else var_str
 	where
 		index = leadingZeros r
 		koefficient = r !! index
 		value = head (reverse r)
 		raw_row = reverse (drop 1 (reverse r))
 		elements_count = length raw_row
-		other_coefficients = filter (\pair -> (fst pair) /= 0 && ((snd pair) - 1) /= index) (zip raw_row [1..elements_count])
+		other_coefficients = filter (\pair -> (fst pair) /= 0 && (snd pair) /= index) (zip raw_row [0..elements_count])
 		subtract_coefficient = (\k -> if k < 0 then (" + " ++ show (-k)) else (" - " ++ (show k)))
-		other_vars_str = concat (map (\pair -> (subtract_coefficient (fst pair)) ++ " * var_" ++ (show (snd pair))) other_coefficients)
-		var_str = "var_" ++ (show (index + 1)) ++ " = " ++ (show (value / koefficient))
+		other_vars_str = concat (map (\pair -> (subtract_coefficient (fst pair)) ++ " * " ++ (var_names !! (snd pair))) other_coefficients)
+		var_str = (var_names !! index) ++ " = " ++ (show (value / koefficient))
 
-gaussExtractResults :: Matrix -> String
-gaussExtractResults [] = []
-gaussExtractResults (r:rs) = (gaussShowVars r) ++ "\n" ++ gaussExtractResults rs
+gaussExtractResults :: Matrix -> [String] -> String
+gaussExtractResults [] _ = []
+gaussExtractResults (r:rs) var_names = (gaussShowVars r var_names) ++ "\n" ++ gaussExtractResults rs var_names
 
-gaussSolve :: Matrix -> Matrix
-gaussSolve mat = gaussFixCoefficients (reverse (gaussReduce (reverse (gaussReduce mat))))
+gaussSolveMatrix :: Matrix -> Matrix
+gaussSolveMatrix mat = gaussFixCoefficients (reverse (gaussReduce (reverse (gaussReduce mat))))
 
 gaussSolveList :: [[Integer]] -> Matrix
-gaussSolveList mat = gaussSolve (gaussConvertMatrix mat)
+gaussSolveList mat = gaussSolveMatrix (gaussConvertMatrix mat)
+
+gaussSolve :: [[Integer]] -> [String] -> String
+gaussSolve mat var_names = gaussExtractResults (gaussSolveList mat) var_names

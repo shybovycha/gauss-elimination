@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 
 executable uklady-rownian
   main-is:             Main.hs
-  -- other-modules:    Fraction.hs Gauss.hs MatrixReader.hs
+  -- other-modules:    Fraction.hs Gauss.hs EquationParser.hs
   -- other-extensions:
   build-depends:       base >=4.6 && <4.7
   -- hs-source-dirs:
