@@ -7,6 +7,11 @@ import EquationParser
 -- main = putStrLn $ show $ first (parseRow "-1977 x1 + 14 x2 + y = -3" [] [])
 -- putStrLn (gaussExtractResults (gaussSolveList [[3,2,3,4,0], [2,5,7,1,-2], [3,4,1,9,5]]))
 
+deepEqual lists = foldl1 (&&) $ map (== h) ls
+	where
+		h = head lists
+		ls = drop 1 lists
+
 split :: (Char -> Bool) -> String -> [String]
 split _ [] = []
 split check s = word : (split check rs)
@@ -22,12 +27,14 @@ getStdin = helper ""
 			if length a <= 1 then return str else helper (str ++ "\n" ++ a)
 
 parseStdin :: String -> ([[Integer]], [String])
-parseStdin txt = (coefficients, var_names)
+parseStdin txt = if inequal_var_names then error error_msg else (coefficients, var_names)
 	where
 		ls = filter ((> 1) . length) $ split (== '\n') txt
 		ls_parsed = map parseLine ls
 		coefficients = map fst ls_parsed
-		var_names = concat $ map snd ls_parsed
+		var_names = head $ map snd ls_parsed
+		inequal_var_names = not $ deepEqual var_names
+		error_msg = "Invalid variables in equations. Maybe, you should provide some missed variables with coefficient 0?"
 
 main = do
 	txt <- getStdin
