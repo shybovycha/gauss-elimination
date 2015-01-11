@@ -62,3 +62,6 @@ parseRow (c:cs) state coefficients var_names
 		repl_k = k_sign * c_int
 		v = if (length var_names) > 0 then head var_names else []
 		new_v = v ++ [c]
+
+parseLine :: String -> ([Integer], [String])
+parseLine s = parseRow s 1 [] []
