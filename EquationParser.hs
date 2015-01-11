@@ -43,7 +43,6 @@ parseRow (c:cs) state coefficients var_names
 	| (state == 1) && (isAlpha c) = parseRow cs 4 coefficients ([c] : var_names)
 	| (state == 2) && (isNum c) = parseRow cs 3 (repl_k : (drop 1 coefficients)) var_names
 	| (state == 2) && (isAlpha c) = parseRow cs 4 coefficients ([c] : var_names)
-	| (state == 3) && (c == '*') = parseRow cs 4 coefficients var_names
 	| (state == 3) && (c == '=') = parseRow cs 5 coefficients var_names
 	| (state == 3) && (isAlpha c) = parseRow cs 4 coefficients ([c] : var_names)
 	| (state == 3) && (isNum c) = parseRow cs 3 (new_k : (drop 1 coefficients)) var_names
@@ -60,7 +59,7 @@ parseRow (c:cs) state coefficients var_names
 		k = abs $ head coefficients
 		k_sign = sign (head coefficients)
 		c_int = atoi c
-		new_k = ((k * k_sign * 10) + c_int)
+		new_k = k_sign * ((k * 10) + c_int)
 		repl_k = k_sign * c_int
 		v = if (length var_names) > 0 then head var_names else []
 		new_v = v ++ [c]
