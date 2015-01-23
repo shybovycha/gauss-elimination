@@ -86,6 +86,12 @@ albo nawęt prostszej:
 	x + y = 10
 	x + y = 20
 
+albo złożonej:
+
+	x + y + z = 10
+	x - y + z = 20
+	2x + 0y + 2z = 50
+
 Tu widzimy, że równiania są sprzeczne. Program obsługuje te sytuację.
 
 ## Układ z nieskonczoną ilościu rozwiązań
@@ -97,3 +103,18 @@ Np.:
 	2x + 3y + 0z = 11
 
 Tu sytuacja jest taka, że nigdy nie znajdziemy żadnego rozwiązania dla tego układu. Te sytuację program zarównież obsługuje.
+
+## Wypisać dowolne rozwiązanie
+
+Ten system ma nieskonczoność rozwiązań:
+
+	x  + y  +  z = 5
+	x  + 2y -  z = 6
+	2x + 3y + 0z = 11
+
+Rozwiązaniem jest
+
+	x = 4 - 3 * z
+	y = 1 + 2 * z
+
+*Remove all rows, consisting of zeroes only, and try to solve the resulting matrix*
