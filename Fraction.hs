@@ -9,7 +9,7 @@ infinity = 1 :/ 0
 
 trim :: (Integral a) => a -> a -> Frac a
 trim _ 0 = infinity -- error "Division by zero within fraction"
-trim x y = ((x * signum y) `quot` g) :/ ((abs y) `quot` g)
+trim x y = ((x * signum y) `quot` g) :/ (abs y `quot` g)
 	where g = gcd x y
 
 numerator :: (Num a) => Frac a -> a
