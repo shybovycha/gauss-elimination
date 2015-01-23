@@ -31,6 +31,8 @@ gaussSortMatrix = flip quicksort gaussCompareRows
 -- check if matrix is inconsistent - it will have all zeroes except last column in at least one row
 inconsistentMatrix = any $ all (== 0) . reverse . drop 1 . reverse
 
+infiniteSolutions = any $ all (== 0)
+
 -- here, guaranteed that r1 has less leading zeros than r2
 gaussMakeZero :: Row -> Row -> Row
 gaussMakeZero r1 r2 = map (\pair -> (fst pair * factor) + snd pair) (zip r1 r2)
@@ -71,7 +73,13 @@ gaussExtractResults [] _ = []
 gaussExtractResults (r:rs) var_names = gaussShowVars r var_names ++ "\n" ++ gaussExtractResults rs var_names
 
 gaussSolveMatrix :: Matrix -> Matrix
-gaussSolveMatrix mat = gaussFixCoefficients (reverse (gaussReduce (reverse (gaussReduce mat))))
+gaussSolveMatrix mat
+	| infiniteSolutions mat1 || infiniteSolutions mat2 = error "System has infinite solutions"
+	| otherwise = mat3
+	where
+		mat1 = gaussReduce mat
+		mat2 = gaussReduce $ reverse mat1
+		mat3 = gaussFixCoefficients $ reverse mat2
 
 gaussSolveList :: [[Integer]] -> Matrix
 gaussSolveList mat = gaussSolveMatrix (gaussConvertMatrix mat)

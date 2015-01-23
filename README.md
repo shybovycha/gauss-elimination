@@ -72,3 +72,28 @@ Wynikiem tej konwersji jest para `(koeficienci, nazwy zmiennych)`. Mapowanie fun
 Po konwersji, program wyłowa funkcje, ktora rozwiązuje układ metodą Gausa. Wynik wywołania tej funkcji jest macierz, w której są koeficienci przy każdej zmiennej.
 
 Na koniec program zamienia wszystkie koeficienci w tej macierzy na koeficient oraz nazwę odpowiedniej zmiennej. Wynikiem tego jest ciąg, który jest wyświetlony na monitorze.
+
+## Sprzeczne układy
+
+Np.:
+
+	x  + y  +  z = 5
+	x  + 2y -  z = 6
+	2x + 3y + 0z = 13
+
+albo nawęt prostszej:
+
+	x + y = 10
+	x + y = 20
+
+Tu widzimy, że równiania są sprzeczne. Program obsługuje te sytuację.
+
+## Układ z nieskonczoną ilościu rozwiązań
+
+Np.:
+
+	x  + y  +  z = 5
+	x  + 2y -  z = 6
+	2x + 3y + 0z = 11
+
+Tu sytuacja jest taka, że nigdy nie znajdziemy żadnego rozwiązania dla tego układu. Te sytuację program zarównież obsługuje.
