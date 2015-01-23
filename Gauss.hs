@@ -28,6 +28,9 @@ gaussCompareRows r1 r2 = leadingZeros r2 - leadingZeros r1
 gaussSortMatrix :: Matrix -> Matrix
 gaussSortMatrix = flip quicksort gaussCompareRows
 
+-- check if matrix is inconsistent - it will have all zeroes except last column in at least one row
+inconsistentMatrix = any $ all (== 0) . reverse . drop 1 . reverse
+
 -- here, guaranteed that r1 has less leading zeros than r2
 gaussMakeZero :: Row -> Row -> Row
 gaussMakeZero r1 r2 = map (\pair -> (fst pair * factor) + snd pair) (zip r1 r2)
@@ -49,7 +52,9 @@ gaussFixCoefficients (r:rs) = map (/ factor) r : gaussFixCoefficients rs
 		factor = r !! index
 
 gaussShowVars :: Row -> [String] -> String
-gaussShowVars r var_names = if not (null other_coefficients) then var_str ++ other_vars_str else var_str
+gaussShowVars r var_names
+	| not (null other_coefficients) = var_str ++ other_vars_str
+	| otherwise = var_str
 	where
 		index = leadingZeros r
 		koefficient = r !! index
@@ -72,4 +77,8 @@ gaussSolveList :: [[Integer]] -> Matrix
 gaussSolveList mat = gaussSolveMatrix (gaussConvertMatrix mat)
 
 gaussSolve :: [[Integer]] -> [String] -> String
-gaussSolve mat = gaussExtractResults (gaussSolveList mat)
+gaussSolve mat
+	| inconsistentMatrix res = error "Matrix is inconsistent"
+	| otherwise = gaussExtractResults res
+	where
+		res = gaussSolveList mat
