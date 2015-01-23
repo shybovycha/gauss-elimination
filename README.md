@@ -51,13 +51,13 @@ N.p.:
 
 **Nie wolno:**
 
-	2x1 + y = 10
+	2x + y = 10
 	y + x = 5
 	<CLCR>
 
 **Powinno być:**
 
-	2x1 + y = 10
+	2x + y = 10
 	x + y = 5
 	<CLCR>
 
