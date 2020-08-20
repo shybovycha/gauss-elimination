@@ -17,9 +17,9 @@ gaussConvertMatrix = map (map (% 1))
 quicksort :: (Ord a) => [a] -> (a -> a -> Int) -> [a]
 quicksort [] _ = []
 quicksort (x:xs) cmp = quicksort lesser cmp ++ [x] ++ quicksort greater cmp
-	where
-		lesser = filter (\i -> cmp x i < 0) xs
-		greater = filter (\i -> cmp x i >= 0) xs
+  where
+    lesser = filter (\i -> cmp x i < 0) xs
+    greater = filter (\i -> cmp x i >= 0) xs
 
 leadingZeros :: Row -> Int
 leadingZeros = length . takeWhile (== 0)
@@ -38,11 +38,11 @@ infiniteSolutions = any $ all (== 0)
 -- here, guaranteed that r1 has less leading zeros than r2
 gaussMakeZero :: Row -> Row -> Row
 gaussMakeZero r1 r2 = map (\pair -> (fst pair * factor) + snd pair) (zip r1 r2)
-	where
-		index = leadingZeros r1
-		r1_elt = r1 !! index
-		r2_elt = r2 !! index
-		factor = -r2_elt / r1_elt
+  where
+    index = leadingZeros r1
+    r1_elt = r1 !! index
+    r2_elt = r2 !! index
+    factor = -r2_elt / r1_elt
 
 gaussReduce :: Matrix -> Matrix
 gaussReduce [] = []
@@ -51,24 +51,24 @@ gaussReduce (r1:rs) = r1 : gaussReduce (map (gaussMakeZero r1) rs)
 gaussFixCoefficients :: Matrix -> Matrix
 gaussFixCoefficients [] = []
 gaussFixCoefficients (r:rs) = map (/ factor) r : gaussFixCoefficients rs
-	where
-		index = leadingZeros r
-		factor = r !! index
+  where
+    index = leadingZeros r
+    factor = r !! index
 
 gaussShowVars :: Row -> [String] -> String
 gaussShowVars r var_names
-	| not (null other_coefficients) = var_str ++ other_vars_str
-	| otherwise = var_str
-	where
-		index = leadingZeros r
-		koefficient = r !! index
-		value = last r
-		raw_row = reverse (drop 1 (reverse r))
-		elements_count = length raw_row
-		other_coefficients = filter (\pair -> fst pair /= 0 && snd pair /= index) (zip raw_row [0..elements_count])
-		subtract_coefficient k = if k < 0 then " + " ++ show (-k) else " - " ++ show k
-		other_vars_str = concatMap (\pair -> subtract_coefficient (fst pair) ++ " * " ++ (var_names !! snd pair)) other_coefficients
-		var_str = (var_names !! index) ++ " = " ++ show (value / koefficient)
+  | not (null other_coefficients) = var_str ++ other_vars_str
+  | otherwise = var_str
+  where
+    index = leadingZeros r
+    koefficient = r !! index
+    value = last r
+    raw_row = reverse (drop 1 (reverse r))
+    elements_count = length raw_row
+    other_coefficients = filter (\pair -> fst pair /= 0 && snd pair /= index) (zip raw_row [0..elements_count])
+    subtract_coefficient k = if k < 0 then " + " ++ show (-k) else " - " ++ show k
+    other_vars_str = concatMap (\pair -> subtract_coefficient (fst pair) ++ " * " ++ (var_names !! snd pair)) other_coefficients
+    var_str = (var_names !! index) ++ " = " ++ show (value / koefficient)
 
 gaussExtractResults :: Matrix -> [String] -> String
 gaussExtractResults [] _ = []
@@ -76,25 +76,25 @@ gaussExtractResults (r:rs) var_names = gaussShowVars r var_names ++ "\n" ++ gaus
 
 gaussRawSolveMatrix :: Matrix -> Matrix
 gaussRawSolveMatrix mat = mat3
-	where
-		mat1 = gaussReduce mat
-		mat2 = gaussReduce $ reverse mat1
-		mat3 = gaussFixCoefficients $ reverse mat2
+  where
+    mat1 = gaussReduce mat
+    mat2 = gaussReduce $ reverse mat1
+    mat3 = gaussFixCoefficients $ reverse mat2
 
 gaussSolveMatrix :: Matrix -> Solution
 gaussSolveMatrix mat
-	| infiniteSolutions mat1 = Infinite res1'
-	| infiniteSolutions mat2 = Infinite res2'
-	| inconsistentMatrix mat3 = Inconsistent
-	| otherwise = Simple mat3
-	where
-		mat1 = gaussReduce mat
-		mat2 = gaussReduce $ reverse mat1
-		mat3 = gaussFixCoefficients $ reverse mat2
-		mat1' = filter (not . all (== 0)) mat1
-		mat2' = filter (not . all (== 0)) mat2
-		res1' = gaussRawSolveMatrix mat1'
-		res2' = gaussRawSolveMatrix mat2'
+  | infiniteSolutions mat1 = Infinite res1'
+  | infiniteSolutions mat2 = Infinite res2'
+  | inconsistentMatrix mat3 = Inconsistent
+  | otherwise = Simple mat3
+  where
+    mat1 = gaussReduce mat
+    mat2 = gaussReduce $ reverse mat1
+    mat3 = gaussFixCoefficients $ reverse mat2
+    mat1' = filter (not . all (== 0)) mat1
+    mat2' = filter (not . all (== 0)) mat2
+    res1' = gaussRawSolveMatrix mat1'
+    res2' = gaussRawSolveMatrix mat2'
 
 extractAndWrapResults :: Solution -> [String] -> String
 extractAndWrapResults (Inconsistent) _ = "System is inconsistent"
