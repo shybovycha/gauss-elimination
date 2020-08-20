@@ -33,7 +33,7 @@ N.p.:
 
 Wprowadzanie danych zakonczy kiedu użytkownik wpisuje pusty ciąg (`CLCR`, <key>Enter</key>).
 
-**Uwaga:** w każdym ciągu muszą być wszystki zmienne, które pojawią w układzie i w jednym porządku. To znaczy, że nie wolno opuszcić żadnej zmiennej w żadnym wierszu. Żeby opuszcić zmienne, trzeba użyć koeficientu `0`. Porządek zmiennych nie wolno zmienić w żadnym z równiań.
+**Uwaga:** każdy wiersz musi zawierać wszystkie zmienne, które pojawią się w układzie. Wszystkie zmienne muszą powstać w tym samym porządku. To znaczy, że program nie przyjmie opuszconych zmiennych. Żeby opuszcić zmienne, należy użyć koeficientu `0`. Porządek zmiennych nie wolno zmieniać w żadnym z równiań.
 
 N.p.:
 
@@ -116,5 +116,3 @@ Rozwiązaniem jest
 
 	x = 4 - 3 * z
 	y = 1 + 2 * z
-
-*Remove all rows, consisting of zeroes only, and try to solve the resulting matrix*
