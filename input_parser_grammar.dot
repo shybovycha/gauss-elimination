@@ -1,0 +1,20 @@
+digraph {
+  rankdir = "LR";
+
+  LineStart -> ReadElement [label = "-"];
+  LineStart -> ReadCoefficient [label = "0..9"];
+  LineStart -> ReadSymbol [label = "a..z"];
+  ReadElement -> ReadCoefficient [label = "0..9"];
+  ReadElement -> ReadSymbol [label = "a..z"];
+  ReadCoefficient -> ReadCoefficient [label = "0..9"];
+  ReadCoefficient -> ReadSymbol [label = "a..z"];
+  ReadCoefficient -> ReadRightSide [label = "="];
+  ReadSymbol -> ReadElement [label = "-"];
+  ReadSymbol -> ReadElement [label = "+"];
+  ReadSymbol -> ReadSymbol [label = "a..z, 0..9"];
+  ReadSymbol -> ReadRightSide [label = "="];
+  ReadRightSide -> ReadNegativeFreeMember [label = "-"];
+  ReadRightSide -> ReadPositiveFreeMember [label = "0..9"];
+  ReadNegativeFreeMember -> ReadPositiveFreeMember [label = "0..9"];
+  ReadPositiveFreeMember -> ReadPositiveFreeMember [label = "0..9"];
+}
