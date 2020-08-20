@@ -27,28 +27,31 @@ atoi ch = snd $ head $ filter ((== ch) . fst) (zip ['0'..'9'] [0..9])
 
 -- ------------------------------------------------------------------------
 
-parseRow :: String -> Integer -> [Integer] -> [String] -> ([Integer], [String])
+-- Initial (start of the line) = 1, ReadElement (read either a positive or negative number or symbol name) = 2, ReadCoefficient (read number) = 3, ReadSymbol (symbol name) = 4, ReadRightSide (after equal sign) = 5, ReadNegativeFreeMember (number) = 6, ReadPositiveFreeMember (number) = 7
+data ParserState = Initial | ReadElement | ReadCoefficient | ReadSymbol | ReadRightSide | ReadNegativeFreeMember | ReadPositiveFreeMember
+
+parseRow :: String -> ParserState -> [Integer] -> [String] -> ([Integer], [String])
 parseRow [] state coefficients var_names
-	| state == 7 = (reverse coefficients, reverse var_names)
+	| state == ReadPositiveFreeMember = (reverse coefficients, reverse var_names)
 	| otherwise = error ("Invalid equation (state: " ++ show state ++ "; coefficients: " ++ show coefficients ++ "; var_names: " ++ show var_names ++ ")")
 
 parseRow (c:cs) state coefficients var_names
-	| (state == 1) && (c == '-') = parseRow cs 2 ((-1) : coefficients) var_names
-	| state == 1 && isNum c = parseRow cs 3 (c_int : coefficients) var_names
-	| state == 1 && isAlpha c = parseRow cs 4 (1 : coefficients) ([c] : var_names)
-	| state == 2 && isNum c = parseRow cs 3 (repl_k : drop 1 coefficients) var_names
-	| state == 2 && isAlpha c = parseRow cs 4 coefficients ([c] : var_names)
-	| (state == 3) && (c == '=') = parseRow cs 5 coefficients var_names
-	| state == 3 && isAlpha c = parseRow cs 4 coefficients ([c] : var_names)
-	| state == 3 && isNum c = parseRow cs 3 (new_k : drop 1 coefficients) var_names
-	| (state == 4) && (c == '-') = parseRow cs 2 ((-1) : coefficients) var_names
-	| (state == 4) && (c == '+') = parseRow cs 2 (1 : coefficients) var_names
-	| state == 4 && isAlphaNum c = parseRow cs 4 coefficients (new_v : drop 1 var_names)
-	| (state == 4) && (c == '=') = parseRow cs 5 coefficients var_names
-	| (state == 5) && (c == '-') = parseRow cs 6 ((-1) : coefficients) var_names
-	| state == 5 && isNum c = parseRow cs 7 (c_int : coefficients) var_names
-	| state == 6 && isNum c = parseRow cs 7 (repl_k : drop 1 coefficients) var_names
-	| state == 7 && isNum c = parseRow cs 7 (new_k : drop 1 coefficients) var_names
+	| state == Initial && (c == '-') = parseRow cs ReadElement ((-1) : coefficients) var_names
+	| state == Initial && isNum c = parseRow cs ReadCoefficient (c_int : coefficients) var_names
+	| state == Initial && isAlpha c = parseRow cs ReadSymbol (1 : coefficients) ([c] : var_names)
+	| state == ReadElement && isNum c = parseRow cs ReadCoefficient (repl_k : drop 1 coefficients) var_names
+	| state == ReadElement && isAlpha c = parseRow cs ReadSymbol coefficients ([c] : var_names)
+	| state == ReadCoefficient && (c == '=') = parseRow cs ReadRightSide coefficients var_names
+	| state == ReadCoefficient && isAlpha c = parseRow cs ReadSymbol coefficients ([c] : var_names)
+	| state == ReadCoefficient && isNum c = parseRow cs ReadCoefficient (new_k : drop 1 coefficients) var_names
+	| state == ReadSymbol && (c == '-') = parseRow cs ReadElement ((-1) : coefficients) var_names
+	| state == ReadSymbol && (c == '+') = parseRow cs ReadElement (1 : coefficients) var_names
+	| state == ReadSymbol && isAlphaNum c = parseRow cs ReadSymbol coefficients (new_v : drop 1 var_names)
+	| state == ReadSymbol && (c == '=') = parseRow cs ReadRightSide coefficients var_names
+	| state == ReadRightSide && (c == '-') = parseRow cs ReadNegativeFreeMember ((-1) : coefficients) var_names
+	| state == ReadRightSide && isNum c = parseRow cs ReadPositiveFreeMember (c_int : coefficients) var_names
+	| state == ReadNegativeFreeMember && isNum c = parseRow cs ReadPositiveFreeMember (repl_k : drop 1 coefficients) var_names
+	| state == ReadPositiveFreeMember && isNum c = parseRow cs ReadPositiveFreeMember (new_k : drop 1 coefficients) var_names
 	| otherwise = parseRow cs state coefficients var_names
 	where
 		k = abs $ head coefficients
