@@ -1,67 +1,70 @@
-# Układy Równiań
+# Matrix equation solver
 
-## Opis
+## Summary
 
-Ten program służy do rozwiązania układów równiań liniowych. Napisany jest w Haskelu. Nie używa innych modułów niż `Prelude`, `IO` oraz `Environment`.
+This is an implementation of a rather simple linear equation system solver. It uses Gauss method to solve the equation systems. It is written in 2016 as a coursework for "Functional Programming" course in Jagiellonian University.
 
-## Wywołanie
+The program does not have any third-party dependencies.
 
-Kompilacje oraz uruchamienie programu wykonuje `cabal`.
+## Building
 
-Żeby zbudować program, dość wywołać
+The program uses Cabal for (dependency management) building.
+To build it simply run
 
 	cabal build
 
-Tak samo, żeby uruchomić program, dość użyć
+## Running
+
+It is as simple as
 
 	cabal run
 
-## Warunki działania
+## Usage
 
-Poprawne ciągi, które program rozumie - to ciągi w postaci
+Program runs as a CLI application, taking a number of strings as input. Each line should be in format
 
-	((<Liczba> ([*]?) <Zmienna>) (+|-) (\1))+ = <Liczba>
+	((<Integer ([*]?) <Variable>) (+|-) (\1))+ = <Integer>
 
-Gdzie
+Where
 
-	<Liczba> :: (-)?(\d+)?
-	<Zmienna> :: [a-zA-Z0-9_]
+	<Integer> :: (-)?(\d+)?
+	<Variable> :: [a-zA-Z0-9_]
 
-N.p.:
+For instance:
 
 	-4 x1 + 15x2 - 7*x_3 = 19
 
-Wprowadzanie danych zakonczy kiedu użytkownik wpisuje pusty ciąg (`CLCR`, <key>Enter</key>).
+The end of the input is denoted by an empty line.
 
-**Uwaga:** każdy wiersz musi zawierać wszystkie zmienne, które pojawią się w układzie. Wszystkie zmienne muszą powstać w tym samym porządku. To znaczy, że program nie przyjmie opuszconych zmiennych. Żeby opuszcić zmienne, należy użyć koeficientu `0`. Porządek zmiennych nie wolno zmieniać w żadnym z równiań.
+## Known issues
 
-N.p.:
+Currently program does not work with missing or unordered variables.
 
-**Nie wolno:**
+For instance, this won't work:
 
 	-3x1 + 2x2 - x3 = 15
 	x1 + x3 = -8
-	<CLCR>
 
-**Powinno być:**
+Note how the `x2` variable is missing in the second equation.
+
+It should be rewritten as follows:
 
 	-3x1 + 2x2 - x3 = 15
 	x1 + 0x2 + x3 = -8
-	<CLCR>
 
-**Nie wolno:**
+Another example:
 
 	2x + y = 10
 	y + x = 5
-	<CLCR>
 
-**Powinno być:**
+Note how variables are not ordered the same way in every equation.
+
+This should do:
 
 	2x + y = 10
 	x + y = 5
-	<CLCR>
 
-## Działanie
+## How it works
 
 Napierw program przekształczy wszystko co użytkownik wprowadził do postaci macierzy. Konwersja polega na końcowym automacie:
 
@@ -73,46 +76,39 @@ Po konwersji, program wyłowa funkcje, ktora rozwiązuje układ metodą Gausa. W
 
 Na koniec program zamienia wszystkie koeficienci w tej macierzy na koeficient oraz nazwę odpowiedniej zmiennej. Wynikiem tego jest ciąg, który jest wyświetlony na monitorze.
 
-## Sprzeczne układy
+### Non-solvable cases
 
-Np.:
+The following systems of equations do not have solutions
+
+#### Example 1
 
 	x  + y  +  z = 5
 	x  + 2y -  z = 6
 	2x + 3y + 0z = 13
 
-albo nawęt prostszej:
+#### Example 2
 
 	x + y = 10
 	x + y = 20
 
-albo złożonej:
+#### Example 3
 
 	x + y + z = 10
 	x - y + z = 20
 	2x + 0y + 2z = 50
 
-Tu widzimy, że równiania są sprzeczne. Program obsługuje te sytuację.
+The program will handle the above cases by returning the `Inconsistent` result.
 
-## Układ z nieskonczoną ilościu rozwiązań
+### Infinite solutions cases
 
-Np.:
-
-	x  + y  +  z = 5
-	x  + 2y -  z = 6
-	2x + 3y + 0z = 11
-
-Tu sytuacja jest taka, że nigdy nie znajdziemy żadnego rozwiązania dla tego układu. Te sytuację program zarównież obsługuje.
-
-## Wypisać dowolne rozwiązanie
-
-Ten system ma nieskonczoność rozwiązań:
+#### Example 1
 
 	x  + y  +  z = 5
 	x  + 2y -  z = 6
 	2x + 3y + 0z = 11
 
-Rozwiązaniem jest
+For the above system, program will return the `Infinite [values]` result, where `[values]` is one of the possible solutions.
 
-	x = 4 - 3 * z
-	y = 1 + 2 * z
+### Simple cases
+
+In all other cases program will return `Simple [values]` result, denoting the only solution to the system.
