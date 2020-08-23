@@ -87,6 +87,12 @@ data ParserState equationParams
     ReadPositiveFreeMember equationParams
   deriving (Show, Eq)
 
+parseDigit :: Char -> state -> Either (ParserError [Char] state) Integer
+parseDigit c state = maybe
+  (Left (InternalParserError ("Can not parse digit " ++ [c]) state))
+  (Right)
+  (atoi c)
+
 -- | Parse equation string. Returns an `Either` of a `ParserError` with context or `EquationParams`
 parseRow ::
   -- | string to parse
@@ -95,12 +101,6 @@ parseRow ::
   (ParserState (EquationParams [Integer] [String])) ->
   -- | a tuple of coefficients and variable names
   Either (ParserError String (ParserState (EquationParams [Integer] [String]))) (EquationParams [Integer] [String])
-
-parseDigit :: Char -> state -> Either (ParserError [Char] state) Integer
-parseDigit c state = maybe
-  (Left (InternalParserError ("Can not parse digit " ++ [c]) state))
-  (Right)
-  (atoi c)
 
 parseRow [] (ReadPositiveFreeMember equation) = Right equation
 parseRow [] state = Left (InvalidEndStateError "Parser reached the end of a line with invalid state" state)
