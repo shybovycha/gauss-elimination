@@ -1,5 +1,7 @@
 module EquationParser where
 
+import Control.Monad (foldM)
+
 import Fraction
 
 -- | Get the sign of the number (n < 0 = -1 or n >= 0 = 1)
@@ -137,5 +139,21 @@ parseRow (c : cs) ReadPositiveFreeMember (k : ks) var_names
 
 parseRow (c : cs) state coefficients var_names = parseRow cs state coefficients var_names
 
+-- | Parse a string into equation system
 parseEquationLine :: String -> Either String ([Integer], [String])
 parseEquationLine line = parseRow (filter (not . isSpace) line) LineStart [] []
+
+-- | Remove duplicates from a list
+unique :: Eq a => [a] -> [a]
+unique elts = foldl (\acc elt -> if any (== elt) acc then acc else (elt : acc)) [] elts
+
+-- | Parse a string into equation and, if successful, fill out the accumulated values
+parseEquationLines' :: ([[Integer]], [String]) -> String -> Either String ([[Integer]], [String])
+parseEquationLines' (coefficients, varNames) line =
+  fmap
+    (\(ks, vars) -> ((ks : coefficients), unique (vars ++ varNames)))
+    (parseEquationLine line)
+
+-- | Parses a list of strings into a system of equations
+parseEquationLines :: [String] -> Either String ([[Integer]], [String])
+parseEquationLines lines = foldM parseEquationLines' ([], []) lines

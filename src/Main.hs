@@ -1,6 +1,5 @@
-import Control.Monad (foldM)
 import Data.Char (isSpace)
-import EquationParser (parseEquationLine)
+import EquationParser (parseEquationLines)
 import Gauss (gaussSolve)
 
 -- | Removes blank characters (spaces) from the beginning and the end of the string
@@ -29,23 +28,8 @@ readStdinLinesUlessBlank accumulatedLinesIO = do
 getInput :: IO [String]
 getInput = readStdinLinesUlessBlank (return [])
 
--- | Remove duplicates from a list
-unique :: Eq a => [a] -> [a]
-unique elts = foldl (\acc elt -> if any (== elt) acc then acc else (elt : acc)) [] elts
-
--- | Parses a list of strings into a system of equations
-parseInput :: [String] -> Either String ([[Integer]], [String])
-parseInput lines = foldM parseInput' ([], []) lines
-
--- | Parse a string into equation and, if successful, fill out the accumulated values
-parseInput' :: ([[Integer]], [String]) -> String -> Either String ([[Integer]], [String])
-parseInput' (coefficients, varNames) line =
-  fmap
-    (\(ks, vars) -> ((ks : coefficients), unique (vars ++ varNames)))
-    (parseEquationLine line)
-
 solveSystem :: ([[Integer]], [String]) -> IO String
-solveSystem (coefficients, varNames) = return (gaussSolve coefficients varNames)
+solveSystem input = return (uncurry gaussSolve $ input)
 
 printHelp :: IO ()
 printHelp = do
@@ -59,5 +43,5 @@ main :: IO ()
 main = do
   printHelp
   lines <- getInput
-  solution <- either (return) (solveSystem) (parseInput lines)
+  solution <- either (return) (solveSystem) (parseEquationLines lines)
   putStrLn $ solution
