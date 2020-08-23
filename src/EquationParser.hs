@@ -60,9 +60,9 @@ atoi ch
 
 -- ------------------------------------------------------------------------
 
-data EquationParams coefficients variables = Equation coefficients variables
+data EquationParams coefficients variables = Equation coefficients variables deriving Show
 
-data ParserError message state = ParserError message state
+data ParserError message state = GenericParserError message state deriving Show
 
 -- | This is an enumeration of all possible parser states (as in state machine):
 data ParserState equationParams
@@ -92,39 +92,39 @@ parseRow ::
   Either (ParserError String (ParserState (EquationParams [Integer] [String]))) (EquationParams [Integer] [String])
 
 parseRow [] (ReadPositiveFreeMember equation) = Right equation
-parseRow [] state = Left (ParserError "Invalid equation" state)
+parseRow [] state = Left (GenericParserError "Parser reached the end of a line with invalid state" state)
 
 parseRow (c : cs) (LineStart (Equation coefficients var_names))
   | (c == '-') = parseRow cs (ReadElement (Equation ((-1) : coefficients) var_names))
   | isNum c = do
     c_int <- maybe
-      (Left (ParserError ("Invalid coefficient " ++ [c]) (LineStart (Equation coefficients var_names))))
+      (Left (GenericParserError ("Can not parse digit " ++ [c]) (LineStart (Equation coefficients var_names))))
       (Right)
       (atoi c)
     parseRow cs (ReadCoefficient (Equation (c_int : coefficients) var_names))
   | isAlpha c = parseRow cs (ReadSymbol (Equation (1 : coefficients) ([c] : var_names)))
-  | otherwise = Left (ParserError "Invalid equation" (LineStart (Equation coefficients var_names)))
+  | otherwise = Left (GenericParserError ("Can not determine parser state transition for character " ++ [c]) (LineStart (Equation coefficients var_names)))
 
 parseRow (c : cs) (ReadElement (Equation (k : ks) var_names))
   | isNum c = do
     repl_k <- maybe
-      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadElement (Equation (k : ks) var_names))))
+      (Left (GenericParserError ("Can not parse digit " ++ [c]) (ReadElement (Equation (k : ks) var_names))))
       (\c_int -> Right (c_int * (sign k)))
       (atoi c)
     parseRow cs (ReadCoefficient (Equation (repl_k : ks) var_names))
   | isAlpha c = parseRow cs (ReadSymbol (Equation (k : ks) ([c] : var_names)))
-  | otherwise = Left (ParserError "Invalid equation" (ReadElement (Equation (k : ks) var_names)))
+  | otherwise = Left (GenericParserError ("Can not determine parser state transition for character " ++ [c]) (ReadElement (Equation (k : ks) var_names)))
 
 parseRow (c : cs) (ReadCoefficient (Equation (k : ks) var_names))
   | (c == '=') = parseRow cs (ReadRightSide (Equation (k : ks) var_names))
   | isAlpha c = parseRow cs (ReadSymbol (Equation (k : ks) ([c] : var_names)))
   | isNum c = do
     new_k <- maybe
-      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadCoefficient (Equation (k : ks) var_names))))
+      (Left (GenericParserError ("Can not parse digit " ++ [c]) (ReadCoefficient (Equation (k : ks) var_names))))
       (\c_int -> Right ((k * 10) + c_int))
       (atoi c)
     parseRow cs (ReadCoefficient (Equation (new_k : ks) var_names))
-  | otherwise = Left (ParserError "Invalid equation" (ReadCoefficient (Equation (k : ks) var_names)))
+  | otherwise = Left (GenericParserError ("Can not determine parser state transition for character " ++ [c]) (ReadCoefficient (Equation (k : ks) var_names)))
 
 parseRow (c : cs) (ReadSymbol (Equation coefficients var_names))
   | (c == '-') = parseRow cs (ReadElement (Equation ((-1) : coefficients) var_names))
@@ -132,40 +132,40 @@ parseRow (c : cs) (ReadSymbol (Equation coefficients var_names))
   | (c == '=') = parseRow cs (ReadRightSide (Equation coefficients var_names))
   | isAlphaNum c && (null var_names) = parseRow cs (ReadSymbol (Equation coefficients [[c]]))
   | isAlphaNum c = parseRow cs (ReadSymbol (Equation coefficients (((head var_names) ++ [c]) : drop 1 var_names)))
-  | otherwise = Left (ParserError "Invalid equation" (ReadSymbol (Equation coefficients var_names)))
+  | otherwise = Left (GenericParserError ("Can not determine parser state transition for character " ++ [c]) (ReadSymbol (Equation coefficients var_names)))
 
 parseRow (c : cs) (ReadRightSide (Equation coefficients var_names))
   | (c == '-') = parseRow cs (ReadNegativeFreeMember (Equation ((-1) : coefficients) var_names))
   | isNum c = do
     c_int <- maybe
-      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadRightSide (Equation coefficients var_names))))
+      (Left (GenericParserError ("Can not parse digit " ++ [c]) (ReadRightSide (Equation coefficients var_names))))
       (Right)
       (atoi c)
     parseRow cs (ReadPositiveFreeMember (Equation (c_int : coefficients) var_names))
-  | otherwise = Left (ParserError "Invalid equation" (ReadRightSide (Equation coefficients var_names)))
+  | otherwise = Left (GenericParserError ("Can not determine parser state transition for character " ++ [c]) (ReadRightSide (Equation coefficients var_names)))
 
 parseRow (c : cs) (ReadNegativeFreeMember (Equation (k : ks) var_names))
   | isNum c = do
     repl_k <- maybe
-      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadNegativeFreeMember (Equation (k : ks) var_names))))
+      (Left (GenericParserError ("Can not parse digit " ++ [c]) (ReadNegativeFreeMember (Equation (k : ks) var_names))))
       (\c_int -> Right (c_int * (sign k)))
       (atoi c)
     parseRow cs (ReadPositiveFreeMember (Equation (repl_k : ks) var_names))
-  | otherwise = Left (ParserError "Invalid equation" (ReadNegativeFreeMember (Equation (k : ks) var_names)))
+  | otherwise = Left (GenericParserError ("Can not determine parser state transition for character " ++ [c]) (ReadNegativeFreeMember (Equation (k : ks) var_names)))
 
 parseRow (c : cs) (ReadPositiveFreeMember (Equation (k : ks) var_names))
   | isNum c = do
     new_k <- maybe
-      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadPositiveFreeMember (Equation (k : ks) var_names))))
+      (Left (GenericParserError ("Can not parse digit " ++ [c]) (ReadPositiveFreeMember (Equation (k : ks) var_names))))
       (\c_int -> Right ((k * 10) + ((sign k) * c_int)))
       (atoi c)
     parseRow cs (ReadPositiveFreeMember (Equation (new_k : ks) var_names))
-  | otherwise = Left (ParserError "Invalid equation" (ReadPositiveFreeMember (Equation (k : ks) var_names)))
+  | otherwise = Left (GenericParserError ("Can not determine parser state transition for character " ++ [c]) (ReadPositiveFreeMember (Equation (k : ks) var_names)))
 
 parseRow (c : cs) state = parseRow cs state
 
-extractParserError :: ParserError message state -> message
-extractParserError (ParserError msg state) = msg
+extractParserError :: (Show t1, Show t2) => ParserError String (ParserState (EquationParams t1 t2)) -> String
+extractParserError (GenericParserError msg state) = msg ++ " Last parser state: " ++ (show state)
 
 extractParserResults :: EquationParams a b -> (a, b)
 extractParserResults (Equation coefficients variables) = (coefficients, variables)
