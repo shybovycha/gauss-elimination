@@ -31,36 +31,40 @@ getInput :: IO [String]
 
 getInput = readStdinLinesUlessBlank (return [])
 
--- ------------------------------------------------------------------------
+-- | Remove duplicates from a list
+unique :: Eq a => [a] -> [a]
+unique [] = []
+unique elts = unique' elts []
 
-deepEqual :: Eq a => [a] -> Bool
-deepEqual (h : ls) = all (== h) ls
+unique' :: Eq a => [a] -> [a] -> [a]
+unique' [] acc = acc
+unique' (x : xs) acc
+  | any (== x) acc = unique' xs acc
+  | otherwise = unique' xs (x : acc)
 
-split :: (Char -> Bool) -> String -> [String]
-split _ [] = []
-split check s = word : split check rs
-  where
-    word = takeWhile (not . check) s
-    wo_word = dropWhile (not . check) s
-    rs = dropWhile check wo_word
+parseInput :: [String] -> Either String ([[Integer]], [String])
+parseInput lines = parseInput' lines ([], [])
 
-parseStdin :: [String] -> ([[Integer]], [String])
-parseStdin lines = if inequal_var_names then error error_msg else (coefficients, var_names)
-  where
-    ls = filter ((> 1) . length) lines
-    ls_parsed = map parseEquationLine ls
-    coefficients = map fst ls_parsed
-    all_var_names = map snd ls_parsed
-    var_names = head $ map snd ls_parsed
-    inequal_var_names = not $ deepEqual all_var_names
-    error_msg = "Invalid variables in equations. Maybe, you should provide some missed variables with coefficient 0? (" ++ show all_var_names ++ ")"
+parseInput' :: [String] -> ([[Integer]], [String]) -> Either String ([[Integer]], [String])
+parseInput' [] (coefficients, varNames) = Right (coefficients, varNames)
+parseInput' (line : ls) (coefficients, varNames) = do
+  (ks, vars) <- parseEquationLine line
+  parseInput' ls ((ks : coefficients), unique (vars ++ varNames))
 
-main :: IO ()
-main = do
+solveSystem :: ([[Integer]], [String]) -> IO String
+solveSystem (coefficients, varNames) = return (gaussSolve coefficients varNames)
+
+printHelp :: IO ()
+printHelp = do
   putStrLn "This app solves systems of linear equations."
   putStrLn "Please enter a system - equation per line, in form of:"
   putStrLn "\tK_iV_i + K_i+1Vi+1 = K_n"
   putStrLn "where K_i, K_i+1 and K_n are numbers and V_i and V_i+1 are variable names (a-z0-9)."
   putStrLn "End the input by entering an empty line."
+
+main :: IO ()
+main = do
+  printHelp
   lines <- getInput
-  putStrLn $ uncurry gaussSolve (parseStdin lines)
+  solution <- either (return) (solveSystem) (parseInput lines)
+  putStrLn $ solution
