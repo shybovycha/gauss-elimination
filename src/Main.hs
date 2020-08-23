@@ -1,3 +1,4 @@
+import Control.Monad (foldM)
 import Data.Char (isSpace)
 import EquationParser (parseEquationLine)
 import Gauss (gaussSolve)
@@ -8,7 +9,6 @@ strip ::
   String ->
   -- | String with space characters stripped
   String
-
 strip = f . f
   where
     f = reverse . (dropWhile isSpace)
@@ -19,7 +19,6 @@ readStdinLinesUlessBlank ::
   IO [String] ->
   -- | Non-blank lines read
   IO [String]
-
 readStdinLinesUlessBlank accumulatedLinesIO = do
   line <- fmap strip getLine
   if length line < 1
@@ -28,28 +27,22 @@ readStdinLinesUlessBlank accumulatedLinesIO = do
 
 -- | Read non-blank lines from STDIN
 getInput :: IO [String]
-
 getInput = readStdinLinesUlessBlank (return [])
 
 -- | Remove duplicates from a list
 unique :: Eq a => [a] -> [a]
-unique [] = []
-unique elts = unique' elts []
+unique elts = foldl (\acc elt -> if any (== elt) acc then acc else (elt : acc)) [] elts
 
-unique' :: Eq a => [a] -> [a] -> [a]
-unique' [] acc = acc
-unique' (x : xs) acc
-  | any (== x) acc = unique' xs acc
-  | otherwise = unique' xs (x : acc)
-
+-- | Parses a list of strings into a system of equations
 parseInput :: [String] -> Either String ([[Integer]], [String])
-parseInput lines = parseInput' lines ([], [])
+parseInput lines = foldM parseInput' ([], []) lines
 
-parseInput' :: [String] -> ([[Integer]], [String]) -> Either String ([[Integer]], [String])
-parseInput' [] (coefficients, varNames) = Right (coefficients, varNames)
-parseInput' (line : ls) (coefficients, varNames) = do
-  (ks, vars) <- parseEquationLine line
-  parseInput' ls ((ks : coefficients), unique (vars ++ varNames))
+-- | Parse a string into equation and, if successful, fill out the accumulated values
+parseInput' :: ([[Integer]], [String]) -> String -> Either String ([[Integer]], [String])
+parseInput' (coefficients, varNames) line =
+  fmap
+    (\(ks, vars) -> ((ks : coefficients), unique (vars ++ varNames)))
+    (parseEquationLine line)
 
 solveSystem :: ([[Integer]], [String]) -> IO String
 solveSystem (coefficients, varNames) = return (gaussSolve coefficients varNames)
