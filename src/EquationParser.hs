@@ -5,6 +5,7 @@
 module EquationParser where
 
 import Control.Monad (foldM)
+import Control.Arrow (left)
 
 import Fraction
 
@@ -96,37 +97,34 @@ parseRow ::
   -- | a tuple of coefficients and variable names
   Either (ParserError String (ParserState (EquationParams [Integer] [String]))) (EquationParams [Integer] [String])
 
+parseDigit :: Char -> Either String Integer
+parseDigit c = maybe
+  (Left ("Can not parse digit " ++ [c]))
+  (Right)
+  (atoi c)
+
 parseRow [] (ReadPositiveFreeMember equation) = Right equation
 parseRow [] state = Left (InvalidEndStateError "Parser reached the end of a line with invalid state" state)
 
 parseRow (c : cs) (LineStart (Equation coefficients var_names))
   | (c == '-') = parseRow cs (ReadElement (Equation ((-1) : coefficients) var_names))
   | isNum c = do
-    c_int <- maybe
-      (Left (InternalParserError ("Can not parse digit " ++ [c]) (LineStart (Equation coefficients var_names))))
-      (Right)
-      (atoi c)
+    c_int <- left (\msg -> InternalParserError msg (LineStart (Equation coefficients var_names))) (parseDigit c)
     parseRow cs (ReadCoefficient (Equation (c_int : coefficients) var_names))
   | isAlpha c = parseRow cs (ReadSymbol (Equation (1 : coefficients) ([c] : var_names)))
 
 parseRow (c : cs) (ReadElement (Equation (k : ks) var_names))
   | isNum c = do
-    repl_k <- maybe
-      (Left (InternalParserError ("Can not parse digit " ++ [c]) (ReadElement (Equation (k : ks) var_names))))
-      (\c_int -> Right (c_int * (sign k)))
-      (atoi c)
-    parseRow cs (ReadCoefficient (Equation (repl_k : ks) var_names))
+    c_int <- left (\msg -> InternalParserError msg (ReadElement (Equation (k : ks) var_names))) (parseDigit c)
+    parseRow cs (ReadCoefficient (Equation ((c_int * (sign k)) : ks) var_names))
   | isAlpha c = parseRow cs (ReadSymbol (Equation (k : ks) ([c] : var_names)))
 
 parseRow (c : cs) (ReadCoefficient (Equation (k : ks) var_names))
   | (c == '=') = parseRow cs (ReadRightSide (Equation (k : ks) var_names))
   | isAlpha c = parseRow cs (ReadSymbol (Equation (k : ks) ([c] : var_names)))
   | isNum c = do
-    new_k <- maybe
-      (Left (InternalParserError ("Can not parse digit " ++ [c]) (ReadCoefficient (Equation (k : ks) var_names))))
-      (\c_int -> Right ((k * 10) + c_int))
-      (atoi c)
-    parseRow cs (ReadCoefficient (Equation (new_k : ks) var_names))
+    c_int <- left (\msg -> InternalParserError msg (ReadCoefficient (Equation (k : ks) var_names))) (parseDigit c)
+    parseRow cs (ReadCoefficient (Equation (((k * 10) + c_int) : ks) var_names))
 
 parseRow (c : cs) (ReadSymbol (Equation coefficients var_names))
   | (c == '-') = parseRow cs (ReadElement (Equation ((-1) : coefficients) var_names))
@@ -138,27 +136,18 @@ parseRow (c : cs) (ReadSymbol (Equation coefficients var_names))
 parseRow (c : cs) (ReadRightSide (Equation coefficients var_names))
   | (c == '-') = parseRow cs (ReadNegativeFreeMember (Equation ((-1) : coefficients) var_names))
   | isNum c = do
-    c_int <- maybe
-      (Left (InternalParserError ("Can not parse digit " ++ [c]) (ReadRightSide (Equation coefficients var_names))))
-      (Right)
-      (atoi c)
+    c_int <- left (\msg -> InternalParserError msg (ReadRightSide (Equation coefficients var_names))) (parseDigit c)
     parseRow cs (ReadPositiveFreeMember (Equation (c_int : coefficients) var_names))
 
 parseRow (c : cs) (ReadNegativeFreeMember (Equation (k : ks) var_names))
   | isNum c = do
-    repl_k <- maybe
-      (Left (InternalParserError ("Can not parse digit " ++ [c]) (ReadNegativeFreeMember (Equation (k : ks) var_names))))
-      (\c_int -> Right (c_int * (sign k)))
-      (atoi c)
-    parseRow cs (ReadPositiveFreeMember (Equation (repl_k : ks) var_names))
+    c_int <- left (\msg -> InternalParserError msg (ReadNegativeFreeMember (Equation (k : ks) var_names))) (parseDigit c)
+    parseRow cs (ReadPositiveFreeMember (Equation ((c_int * (sign k)) : ks) var_names))
 
 parseRow (c : cs) (ReadPositiveFreeMember (Equation (k : ks) var_names))
   | isNum c = do
-    new_k <- maybe
-      (Left (InternalParserError ("Can not parse digit " ++ [c]) (ReadPositiveFreeMember (Equation (k : ks) var_names))))
-      (\c_int -> Right ((k * 10) + ((sign k) * c_int)))
-      (atoi c)
-    parseRow cs (ReadPositiveFreeMember (Equation (new_k : ks) var_names))
+    c_int <- left (\msg -> InternalParserError msg (ReadPositiveFreeMember (Equation (k : ks) var_names))) (parseDigit c)
+    parseRow cs (ReadPositiveFreeMember (Equation (((k * 10) + ((sign k) * c_int)) : ks) var_names))
 
 parseRow (c : cs) state = Left (MissingStateTransitionError ("Can not determine parser state transition for character " ++ [c]) state)
 
