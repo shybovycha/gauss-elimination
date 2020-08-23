@@ -1,20 +1,42 @@
+{--|
+  Parser for the user input. Parses single lines into equations and lists of lines into equation systems.
+--}
+
 module EquationParser where
 
 import Control.Monad (foldM)
 
 import Fraction
 
--- | Get the sign of the number (n < 0 = -1 or n >= 0 = 1)
+-- | Get the sign of the number
+--
+-- >>> sign (-7)
+-- -1
+-- >>> sign 0
+-- 1
+-- >>> sign 42
+-- 1
+--
 sign :: Integer -> Integer
 sign x
   | x < 0 = -1
   | otherwise = 1
 
 -- | Check if an element is a member of a given list
+-- >>> member 12 [-4, 7, 13]
+-- False
+-- >>> member 2 [1, 2, 3]
+-- True
+--
 member :: (Eq a) => a -> [a] -> Bool
 member e list = ((> 0) . length) $ filter (== e) list
 
 -- | Check if a char is a number ('0'..'9')
+-- >>> isNum 'a'
+-- False
+-- >>> isNum '4'
+-- True
+--
 isNum :: Char -> Bool
 isNum ch = member ch ['0' .. '9']
 
@@ -139,15 +161,24 @@ parseRow (c : cs) ReadPositiveFreeMember (k : ks) var_names
 
 parseRow (c : cs) state coefficients var_names = parseRow cs state coefficients var_names
 
--- | Parse a string into equation system
+-- | Parse a string into equation system.
+-- This first removes all spaces from the input line (so we don't have to bother further down the line)
+-- and runs a state machine with the initial state.
 parseEquationLine :: String -> Either String ([Integer], [String])
 parseEquationLine line = parseRow (filter (not . isSpace) line) LineStart [] []
 
 -- | Remove duplicates from a list
+-- This utilizes the `foldl` with `any` underneath.
+-- Thus this is not a fastest implementation, but since I did not want to use any third-party modules, ¯\_(ツ)_/¯
+-- A __much__ faster implementation would be basically just constructing a Set out of a list and then spreading it back to a list.
 unique :: Eq a => [a] -> [a]
 unique elts = foldl (\acc elt -> if any (== elt) acc then acc else (elt : acc)) [] elts
 
--- | Parse a string into equation and, if successful, fill out the accumulated values
+-- | Parse a single string into equation and, if successful, fill out the accumulated values.
+-- Currently the whole conversion is nothing but running a `parseEquationLine`
+-- and mapping its result onto a tuple of coefficients and variable names.
+-- This is actually the bottleneck, which implies a constraint on user input - all variables must follow
+-- the same order and no missed variables are allowed.
 parseEquationLines' :: ([[Integer]], [String]) -> String -> Either String ([[Integer]], [String])
 parseEquationLines' (coefficients, varNames) line =
   fmap
@@ -155,5 +186,7 @@ parseEquationLines' (coefficients, varNames) line =
     (parseEquationLine line)
 
 -- | Parses a list of strings into a system of equations
+-- This runs a functor on a list of lines with initial state.
+-- It is essentially just a nifty `foldl` on `Either`'s.
 parseEquationLines :: [String] -> Either String ([[Integer]], [String])
 parseEquationLines lines = foldM parseEquationLines' ([], []) lines

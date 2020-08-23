@@ -19,3 +19,4 @@ executable uklady-rownian
   other-modules:       Fraction Gauss EquationParser
   build-depends:       base >=4.6
   default-language:    Haskell2010
+  documentation:       true
