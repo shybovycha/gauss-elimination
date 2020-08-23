@@ -60,112 +60,127 @@ atoi ch
 
 -- ------------------------------------------------------------------------
 
+data EquationParams coefficients variables = Equation coefficients variables
+
+data ParserError message state = ParserError message state
+
 -- | This is an enumeration of all possible parser states (as in state machine):
-data ParserState
+data ParserState equationParams
   = -- | start of the line
-    LineStart
+    LineStart equationParams
   | -- | read either a positive or negative number or symbol name
-    ReadElement
+    ReadElement equationParams
   | -- | read number
-    ReadCoefficient
+    ReadCoefficient equationParams
   | -- | symbol name
-    ReadSymbol
+    ReadSymbol equationParams
   | -- | after equal sign
-    ReadRightSide
+    ReadRightSide equationParams
   | -- | number
-    ReadNegativeFreeMember
+    ReadNegativeFreeMember equationParams
   | -- | number
-    ReadPositiveFreeMember
+    ReadPositiveFreeMember equationParams
   deriving (Show, Eq)
 
--- | Parse equation string, internal helper method
+-- | Parse equation string. Returns an `Either` of a `ParserError` with context or `EquationParams`
 parseRow ::
-  -- | the line to parse
+  -- | string to parse
   String ->
   -- | current parser state
-  ParserState ->
-  -- | list of coefficient accumulated so far
-  [Integer] ->
-  -- | list of variable names so far, should be aligned with coefficients
-  [String] ->
+  (ParserState (EquationParams [Integer] [String])) ->
   -- | a tuple of coefficients and variable names
-  Either String ([Integer], [String])
+  Either (ParserError String (ParserState (EquationParams [Integer] [String]))) (EquationParams [Integer] [String])
 
-parseRow [] ReadPositiveFreeMember coefficients var_names = Right (reverse coefficients, reverse var_names)
-parseRow [] state coefficients var_names = Left ("Invalid equation (state: " ++ show state ++ "; coefficients: " ++ show coefficients ++ "; var_names: " ++ show var_names ++ ")")
+parseRow [] (ReadPositiveFreeMember equation) = Right equation
+parseRow [] state = Left (ParserError "Invalid equation" state)
 
-parseRow (c : cs) LineStart coefficients var_names
-  | (c == '-') = parseRow cs ReadElement ((-1) : coefficients) var_names
+parseRow (c : cs) (LineStart (Equation coefficients var_names))
+  | (c == '-') = parseRow cs (ReadElement (Equation ((-1) : coefficients) var_names))
   | isNum c = do
     c_int <- maybe
-      (Left ("Invalid coefficient " ++ [c]))
+      (Left (ParserError ("Invalid coefficient " ++ [c]) (LineStart (Equation coefficients var_names))))
       (Right)
       (atoi c)
-    parseRow cs ReadCoefficient (c_int : coefficients) var_names
-  | isAlpha c = parseRow cs ReadSymbol (1 : coefficients) ([c] : var_names)
-  | otherwise = Left ("Invalid equation (state: LineStart; coefficients: " ++ show coefficients ++ "; var_names: " ++ show var_names ++ "; current char: `" ++ (show c) ++ "`)")
+    parseRow cs (ReadCoefficient (Equation (c_int : coefficients) var_names))
+  | isAlpha c = parseRow cs (ReadSymbol (Equation (1 : coefficients) ([c] : var_names)))
+  | otherwise = Left (ParserError "Invalid equation" (LineStart (Equation coefficients var_names)))
 
-parseRow (c : cs) ReadElement (k : ks) var_names
+parseRow (c : cs) (ReadElement (Equation (k : ks) var_names))
   | isNum c = do
     repl_k <- maybe
-      (Left ("Invalid coefficient " ++ [c]))
+      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadElement (Equation (k : ks) var_names))))
       (\c_int -> Right (c_int * (sign k)))
       (atoi c)
-    parseRow cs ReadCoefficient (repl_k : ks) var_names
-  | isAlpha c = parseRow cs ReadSymbol (k : ks) ([c] : var_names)
-  | otherwise = Left ("Invalid equation (state: ReadElement; coefficients: " ++ show (k : ks) ++ "; var_names: " ++ show var_names ++ "; current char: `" ++ (show c) ++ "`)")
+    parseRow cs (ReadCoefficient (Equation (repl_k : ks) var_names))
+  | isAlpha c = parseRow cs (ReadSymbol (Equation (k : ks) ([c] : var_names)))
+  | otherwise = Left (ParserError "Invalid equation" (ReadElement (Equation (k : ks) var_names)))
 
-parseRow (c : cs) ReadCoefficient (k : ks) var_names
-  | (c == '=') = parseRow cs ReadRightSide (k : ks) var_names
-  | isAlpha c = parseRow cs ReadSymbol (k : ks) ([c] : var_names)
+parseRow (c : cs) (ReadCoefficient (Equation (k : ks) var_names))
+  | (c == '=') = parseRow cs (ReadRightSide (Equation (k : ks) var_names))
+  | isAlpha c = parseRow cs (ReadSymbol (Equation (k : ks) ([c] : var_names)))
   | isNum c = do
     new_k <- maybe
-      (Left ("Invalid coefficient " ++ [c]))
+      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadCoefficient (Equation (k : ks) var_names))))
       (\c_int -> Right ((k * 10) + c_int))
       (atoi c)
-    parseRow cs ReadCoefficient (new_k : ks) var_names
-  | otherwise = Left ("Invalid equation (state: ReadCoefficient; coefficients: " ++ show (k : ks) ++ "; var_names: " ++ show var_names ++ "; current char: `" ++ (show c) ++ "`)")
+    parseRow cs (ReadCoefficient (Equation (new_k : ks) var_names))
+  | otherwise = Left (ParserError "Invalid equation" (ReadCoefficient (Equation (k : ks) var_names)))
 
-parseRow (c : cs) ReadSymbol coefficients var_names
-  | (c == '-') = parseRow cs ReadElement ((-1) : coefficients) var_names
-  | (c == '+') = parseRow cs ReadElement (1 : coefficients) var_names
-  | (c == '=') = parseRow cs ReadRightSide coefficients var_names
-  | isAlphaNum c && (null var_names) = parseRow cs ReadSymbol coefficients [[c]]
-  | isAlphaNum c = parseRow cs ReadSymbol coefficients (((head var_names) ++ [c]) : drop 1 var_names)
-  | otherwise = Left ("Invalid equation (state: ReadSymbol; coefficients: " ++ show coefficients ++ "; var_names: " ++ show var_names ++ "; current char: `" ++ (show c) ++ "`)")
+parseRow (c : cs) (ReadSymbol (Equation coefficients var_names))
+  | (c == '-') = parseRow cs (ReadElement (Equation ((-1) : coefficients) var_names))
+  | (c == '+') = parseRow cs (ReadElement (Equation (1 : coefficients) var_names))
+  | (c == '=') = parseRow cs (ReadRightSide (Equation coefficients var_names))
+  | isAlphaNum c && (null var_names) = parseRow cs (ReadSymbol (Equation coefficients [[c]]))
+  | isAlphaNum c = parseRow cs (ReadSymbol (Equation coefficients (((head var_names) ++ [c]) : drop 1 var_names)))
+  | otherwise = Left (ParserError "Invalid equation" (ReadSymbol (Equation coefficients var_names)))
 
-parseRow (c : cs) ReadRightSide coefficients var_names
-  | (c == '-') = parseRow cs ReadNegativeFreeMember ((-1) : coefficients) var_names
+parseRow (c : cs) (ReadRightSide (Equation coefficients var_names))
+  | (c == '-') = parseRow cs (ReadNegativeFreeMember (Equation ((-1) : coefficients) var_names))
   | isNum c = do
-    c_int <- maybe (Left ("Invalid coefficient " ++ [c])) (Right) (atoi c)
-    parseRow cs ReadPositiveFreeMember (c_int : coefficients) var_names
-  | otherwise = Left ("Invalid equation (state: ReadRightSide; coefficients: " ++ show coefficients ++ "; var_names: " ++ show var_names ++ "; current char: `" ++ (show c) ++ "`)")
+    c_int <- maybe
+      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadRightSide (Equation coefficients var_names))))
+      (Right)
+      (atoi c)
+    parseRow cs (ReadPositiveFreeMember (Equation (c_int : coefficients) var_names))
+  | otherwise = Left (ParserError "Invalid equation" (ReadRightSide (Equation coefficients var_names)))
 
-parseRow (c : cs) ReadNegativeFreeMember (k : ks) var_names
+parseRow (c : cs) (ReadNegativeFreeMember (Equation (k : ks) var_names))
   | isNum c = do
     repl_k <- maybe
-      (Left ("Invalid coefficient " ++ [c]))
+      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadNegativeFreeMember (Equation (k : ks) var_names))))
       (\c_int -> Right (c_int * (sign k)))
       (atoi c)
-    parseRow cs ReadPositiveFreeMember (repl_k : ks) var_names
-  | otherwise = Left ("Invalid equation (state: ReadNegativeFreeMember; coefficients: " ++ show (k : ks) ++ "; var_names: " ++ show var_names ++ "; current char: `" ++ (show c) ++ "`)")
+    parseRow cs (ReadPositiveFreeMember (Equation (repl_k : ks) var_names))
+  | otherwise = Left (ParserError "Invalid equation" (ReadNegativeFreeMember (Equation (k : ks) var_names)))
 
-parseRow (c : cs) ReadPositiveFreeMember (k : ks) var_names
+parseRow (c : cs) (ReadPositiveFreeMember (Equation (k : ks) var_names))
   | isNum c = do
     new_k <- maybe
-      (Left ("Invalid coefficient " ++ [c]))
+      (Left (ParserError ("Invalid coefficient " ++ [c]) (ReadPositiveFreeMember (Equation (k : ks) var_names))))
       (\c_int -> Right ((k * 10) + ((sign k) * c_int)))
       (atoi c)
-    parseRow cs ReadPositiveFreeMember (new_k : ks) var_names
-  | otherwise = Left ("Invalid equation (state: ReadPositiveFreeMember; coefficients: " ++ show (k : ks) ++ "; var_names: " ++ show var_names ++ "; current char: `" ++ (show c) ++ "`)")
+    parseRow cs (ReadPositiveFreeMember (Equation (new_k : ks) var_names))
+  | otherwise = Left (ParserError "Invalid equation" (ReadPositiveFreeMember (Equation (k : ks) var_names)))
 
-parseRow (c : cs) state coefficients var_names = parseRow cs state coefficients var_names
+parseRow (c : cs) state = parseRow cs state
+
+extractParserError :: ParserError message state -> message
+extractParserError (ParserError msg state) = msg
+
+extractParserResults :: EquationParams a b -> (a, b)
+extractParserResults (Equation coefficients variables) = (coefficients, variables)
+
+initialParserState :: ParserState (EquationParams [a1] [a2])
+initialParserState = (LineStart (Equation [] []))
 
 -- | Parse a string into equation system.
 -- This first removes all spaces from the input line (so we don't have to bother further down the line)
 -- and runs a state machine with the initial state.
 parseEquationLine :: String -> Either String ([Integer], [String])
-parseEquationLine line = parseRow (filter (not . isSpace) line) LineStart [] []
+parseEquationLine line = either
+  (Left . extractParserError)
+  (Right . extractParserResults)
+  (parseRow (filter (not . isSpace) line) initialParserState)
 
 -- | Remove duplicates from a list
 -- This utilizes the `foldl` with `any` underneath.
