@@ -1,5 +1,5 @@
 import Data.Char (isSpace)
-import EquationParser (parseEquationLines)
+import EquationParser (parseSystem)
 import Gauss (gaussSolve)
 
 -- | Removes blank characters (spaces) from the beginning and the end of the string
@@ -43,5 +43,5 @@ main :: IO ()
 main = do
   printHelp
   lines <- getInput
-  solution <- either (return) (solveSystem) (parseEquationLines lines)
+  solution <- either (return) (solveSystem) (parseSystem lines)
   putStrLn $ solution

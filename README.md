@@ -36,35 +36,9 @@ For instance:
 
 The end of the input is denoted by an empty line.
 
-## Known issues
-
-Currently program does not work with missing or unordered variables.
-
-For instance, this won't work:
-
-	-3x1 + 2x2 - x3 = 15
-	x1 + x3 = -8
-
-Note how the `x2` variable is missing in the second equation.
-
-It should be rewritten as follows:
-
-	-3x1 + 2x2 - x3 = 15
-	x1 + 0x2 + x3 = -8
-
-Another example:
-
-	2x + y = 10
-	y + x = 5
-
-Note how variables are not ordered the same way in every equation.
-
-This should do:
-
-	2x + y = 10
-	x + y = 5
-
 ## How it works
+
+**Beware: my Polish skills were terrible back in the day**
 
 Napierw program przekształczy wszystko co użytkownik wprowadził do postaci macierzy. Konwersja polega na końcowym automacie:
 

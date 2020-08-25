@@ -16,7 +16,7 @@ build-type:          Simple
 executable uklady-rownian
   hs-source-dirs:      src
   main-is:             Main.hs
-  other-modules:       Fraction Gauss EquationParser
+  other-modules:       Fraction Gauss EquationParser Map
   build-depends:       base >=4.6
   default-language:    Haskell2010
   documentation:       true

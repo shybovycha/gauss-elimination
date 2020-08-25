@@ -1,20 +1,27 @@
 digraph {
   rankdir = "LR";
 
-  LineStart -> ReadElement [label = "-"];
-  LineStart -> ReadCoefficient [label = "0..9"];
-  LineStart -> ReadSymbol [label = "a..z"];
-  ReadElement -> ReadCoefficient [label = "0..9"];
-  ReadElement -> ReadSymbol [label = "a..z"];
-  ReadCoefficient -> ReadCoefficient [label = "0..9"];
-  ReadCoefficient -> ReadSymbol [label = "a..z"];
-  ReadCoefficient -> ReadRightSide [label = "="];
-  ReadSymbol -> ReadElement [label = "-"];
-  ReadSymbol -> ReadElement [label = "+"];
-  ReadSymbol -> ReadSymbol [label = "a..z, 0..9"];
-  ReadSymbol -> ReadRightSide [label = "="];
-  ReadRightSide -> ReadNegativeFreeMember [label = "-"];
-  ReadRightSide -> ReadPositiveFreeMember [label = "0..9"];
+  ReadElement -> ReadNegativeCoefficient [label = "-"];
+  ReadElement -> ReadPositiveCoefficient [label = "0..9"];
+  ReadElement -> ReadVariableName [label = "a..z"];
+
+  ReadNegativeCoefficient -> ReadPositiveCoefficient [label = "0..9"];
+  ReadNegativeCoefficient -> ReadVariableName [label = "a..z"];
+
+  ReadPositiveCoefficient -> ReadPositiveCoefficient [label = "0..9"];
+  ReadPositiveCoefficient -> ReadVariableName [label = "a..z"];
+  ReadPositiveCoefficient -> ReadElement [label = "+"];
+  ReadPositiveCoefficient -> ReadElement [label = "-"];
+
+  ReadVariableName -> ReadVariableName [label = "a..z, 0..9"];
+  ReadVariableName -> ReadNegativeCoefficient [label = "-"];
+  ReadVariableName -> ReadPositiveCoefficient [label = "+"];
+  ReadVariableName -> ReadFreeMember [label = "="];
+
+  ReadFreeMember -> ReadNegativeFreeMember [label = "-"];
+  ReadFreeMember -> ReadPositiveFreeMember [label = "0..9"];
+
   ReadNegativeFreeMember -> ReadPositiveFreeMember [label = "0..9"];
+
   ReadPositiveFreeMember -> ReadPositiveFreeMember [label = "0..9"];
 }

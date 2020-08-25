@@ -4,9 +4,10 @@
 
 module EquationParser where
 
-import Control.Monad (foldM)
+import Control.Monad (foldM, sequence)
 
 import Fraction
+import Map
 
 -- | Get the sign of the number
 --
@@ -166,7 +167,45 @@ parseEquationLine :: String -> Either String ([Integer], [String])
 parseEquationLine line = either
   (Left . extractParserError)
   (Right . extractParserResults)
-  (parseRow (filter (not . isSpace) line) initialParserState)
+  (parseRow lineWithNoSpaces initialParserState)
+  where
+    lineWithNoSpaces = filter (not . isSpace) line
+
+-- | Returns a mapping from a variable name to its coefficient. Skips free equation member.
+getVariablesMapping :: ([Integer], [String]) -> Map String Integer
+getVariablesMapping (coefficients, variables) = foldl (\acc (variable, coefficient) -> put acc variable coefficient) emptyMap (zip variables (drop 1 coefficients))
+
+-- | Smashes all the keys of all the maps provided into one list and removes duplicates.
+-- This effectively gives a list of all the variables found in the equation system.
+getVariableNames :: [Map String Integer] -> [String]
+getVariableNames mappings = foldl (\acc mapping -> unique (acc ++ (keys mapping))) [] mappings
+
+-- | Takes the list of existing variables and fills the mapping with missing ones. Defaults missing variables' coefficients to 0.
+fillVariablesMapping :: [String] -> Map String Integer -> Map String Integer
+fillVariablesMapping variables mapping = foldl (\acc variable -> if not (containsKey acc variable) then put acc variable 0 else acc) mapping variables
+
+-- | This is somewhat complex function - it does quite a few manipulations in order to get things right for the solver:
+--
+-- 1. parse the equations into a tuple of coefficients and variable names
+-- 2. get all variable names registered in the system
+-- 3. add the missing variables with 0 coefficient to every equation that misses them
+-- 4. put every coefficient in the same order as variables in the `variables` list
+-- 5. get the free member of each equation and append it *to the end* of each list of coefficients
+-- 6. convert everything back into a tuple of coefficients and variable names
+--
+-- This way all coefficients and variable names will be aligned and the gaps will be filled so that
+-- the whole system is ready to be passed to the solver.
+parseSystem :: [String] -> Either String ([[Integer]], [String])
+parseSystem lines = do
+  equationsParams <- sequence $ map parseEquationLine lines
+  let partialMappings = map getVariablesMapping equationsParams
+  let variables = getVariableNames partialMappings
+  let fullMappings = map (fillVariablesMapping variables) partialMappings
+  let freeMembers = map ((take 1) . fst) equationsParams -- takes the free member for each equation, which is always the first element of coefficients element of a tuple
+  let orderedCoefficientsMaybe = sequence $ map (\mapping -> sequence $ map (get mapping) variables) fullMappings
+  orderedCoefficients <- maybe (Left "Coefficients do not match") (Right) orderedCoefficientsMaybe
+  let coefficients = map (\(freeMember, rest) -> rest ++ freeMember) (zip freeMembers orderedCoefficients)
+  return (coefficients, variables)
 
 -- | Remove duplicates from a list
 -- This utilizes the `foldl` with `any` underneath.
