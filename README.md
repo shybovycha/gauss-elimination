@@ -38,17 +38,16 @@ The end of the input is denoted by an empty line.
 
 ## How it works
 
-**Beware: my Polish skills were terrible back in the day**
-
-Napierw program przekształczy wszystko co użytkownik wprowadził do postaci macierzy. Konwersja polega na końcowym automacie:
+Initially program parses the entire user input (read from `STDIN`) into matrix form.
+Each input line is parsed using the following state machine:
 
 ![state machine graph](https://github.com/shybovycha/uklady-rownian/raw/master/input_parser_grammar.png)
 
-Wynikiem tej konwersji jest para `(koeficienci, nazwy zmiennych)`. Mapowanie funkcji konwersji na każdy ciąg wejścia produkuje macierze koeficienci oraz liste nazw zmiennych.
+Each line is represented as a tuple `(list of multipliers, list of variable names)`.
 
-Po konwersji, program wyłowa funkcje, ktora rozwiązuje układ metodą Gausa. Wynik wywołania tej funkcji jest macierz, w której są koeficienci przy każdej zmiennej.
+The next step is to iteratively reduce multipliers in each matrix row down to `0` (if there is more than one multiplier in a given row) or `1` (if there is just one multiplier left in a given row). Doing so transforms each equation into the `x_i = y_i` shape, giving the solution of a given equation system.
 
-Na koniec program zamienia wszystkie koeficienci w tej macierzy na koeficient oraz nazwę odpowiedniej zmiennej. Wynikiem tego jest ciąg, który jest wyświetlony na monitorze.
+Last stage is forming the output using the list of variable names and the reduced equations.
 
 ### Non-solvable cases
 
