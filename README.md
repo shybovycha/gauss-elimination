@@ -42,7 +42,7 @@ The end of the input is denoted by an empty line.
 
 Napierw program przekształczy wszystko co użytkownik wprowadził do postaci macierzy. Konwersja polega na końcowym automacie:
 
-![state machine graph](https://raw.github.com/shybovycha/uklady-rownian/master/grammatic_for_matrix_row.png)
+![state machine graph](https://github.com/shybovycha/uklady-rownian/raw/master/input_parser_grammar.png)
 
 Wynikiem tej konwersji jest para `(koeficienci, nazwy zmiennych)`. Mapowanie funkcji konwersji na każdy ciąg wejścia produkuje macierze koeficienci oraz liste nazw zmiennych.
 
