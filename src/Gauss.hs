@@ -14,17 +14,17 @@ data Solution = Simple Matrix | Infinite Matrix | Inconsistent
 
 quicksort :: (Ord a) => [a] -> (a -> a -> Int) -> [a]
 quicksort [] _ = []
-quicksort (x : xs) cmp = quicksort lesser cmp ++ [x] ++ quicksort greater cmp
+quicksort (x : xs) cmp = (quicksort lesser cmp) ++ [x] ++ (quicksort greater cmp)
   where
-    lesser = filter (\i -> cmp x i < 0) xs
-    greater = filter (\i -> cmp x i >= 0) xs
+    lesser = [i | i <- xs, (cmp x i) < 0]
+    greater = [i | i <- xs, (cmp x i) >= 0]
 
 leadingZeros :: Row -> Int
 leadingZeros = length . takeWhile (== 0)
 
 -- check if matrix is inconsistent - it will have all zeroes except last column in at least one row
 inconsistentMatrix :: [[Frac Integer]] -> Bool
-inconsistentMatrix = any $ all (== 0) . reverse . drop 1 . reverse
+inconsistentMatrix = any $ all (== 0) . reverse . drop 1
 
 infiniteSolutions :: [[Frac Integer]] -> Bool
 infiniteSolutions = any $ all (== 0)
@@ -40,13 +40,15 @@ gaussConvertMatrix = map (map fromInteger)
 
 -- here, guaranteed that r1 has less leading zeros than r2
 gaussMakeZero :: Row -> Row -> Row
-gaussMakeZero r1 r2 = map (\pair -> (fst pair * factor) + snd pair) (zip r1 r2)
+gaussMakeZero r1 r2 = map (\(r1_elt, r2_elt) -> (r1_elt * factor) + r2_elt) (zip r1 r2)
   where
     index = leadingZeros r1
-    r1_elt = r1 !! index
-    r2_elt = r2 !! index
-    factor = - r2_elt / r1_elt
+    r1_head = r1 !! index
+    r2_head = r2 !! index
+    factor = (-1 * r2_head) / r1_head
 
+-- apply the "zeroing head" operation to all the rows except the first one.
+-- do this recursively for every row
 gaussReduce :: Matrix -> Matrix
 gaussReduce [] = []
 gaussReduce (r1 : rs) = r1 : gaussReduce (map (gaussMakeZero r1) rs)
@@ -58,6 +60,24 @@ gaussFixCoefficients (r : rs) = map (/ factor) r : gaussFixCoefficients rs
     index = leadingZeros r
     factor = r !! index
 
+-- converts the matrix row reduced by the Gauss algorithm down to few members to string representation of a result.
+-- technically it does not _show_ the results, it also calculates them.
+--
+-- if a row contains just one number, it is the free member and it will be the resulting variable.
+-- if a row contains exactly two numbers, the resulting variable is the free member (last number) over the last coefficient (the first number).
+-- if a row contains more numbers, then a simple conversion will be made:
+--
+-- >>> gaussShowVars [3, 4, 5] ["x1", "x2"]
+-- "x1 = 5/3 - 4 * x2"
+--
+-- same as:
+--
+-- 3x1 + 4x2 = 5
+-- 3x1 = 5 - 4x2
+-- x1 = (5 - 4x2) / 3
+--
+-- also, it does not quite work as expected :P
+--
 gaussShowVars :: Row -> [String] -> String
 gaussShowVars r var_names
   | not (null other_coefficients) = var_str ++ other_vars_str
@@ -66,16 +86,15 @@ gaussShowVars r var_names
     index = leadingZeros r
     coefficient = r !! index
     value = last r
-    raw_row = reverse (drop 1 (reverse r))
+    raw_row = reverse . drop 1 . reverse $ r -- row coefficients, except the free member
     elements_count = length raw_row
-    other_coefficients = filter (\pair -> fst pair /= 0 && snd pair /= index) (zip raw_row [0 .. elements_count])
+    other_coefficients = filter (\(k, k_idx) -> k /= 0 && k_idx /= index) (zip raw_row [0 .. elements_count])
     subtract_coefficient k = if k < 0 then " + " ++ show (- k) else " - " ++ show k
-    other_vars_str = concatMap (\pair -> subtract_coefficient (fst pair) ++ " * " ++ (var_names !! snd pair)) other_coefficients
+    other_vars_str = concatMap (\(k, k_idx) -> subtract_coefficient k ++ " * " ++ (var_names !! k_idx)) other_coefficients
     var_str = (var_names !! index) ++ " = " ++ show (value / coefficient)
 
 gaussExtractResults :: Matrix -> [String] -> String
-gaussExtractResults [] _ = []
-gaussExtractResults (r : rs) var_names = gaussShowVars r var_names ++ "\n" ++ gaussExtractResults rs var_names
+gaussExtractResults rows var_names = foldl (\acc row -> gaussShowVars row var_names ++ "\n" ++ acc) "" rows
 
 gaussRawSolveMatrix :: Matrix -> Matrix
 gaussRawSolveMatrix mat = mat3
@@ -105,7 +124,7 @@ extractAndWrapResults (Simple res) var_names = gaussExtractResults res var_names
 extractAndWrapResults (Infinite res) var_names = "System has infinite solutions. One of them is\n" ++ gaussExtractResults res var_names
 
 gaussSolveList :: [[Integer]] -> Solution
-gaussSolveList mat = gaussSolveMatrix (gaussConvertMatrix mat)
+gaussSolveList = gaussSolveMatrix . gaussConvertMatrix
 
 gaussSolve :: [[Integer]] -> [String] -> String
-gaussSolve mat = extractAndWrapResults $ gaussSolveList mat
+gaussSolve = extractAndWrapResults . gaussSolveList
