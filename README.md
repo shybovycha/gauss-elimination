@@ -21,7 +21,7 @@ It is as simple as
 
 ## Usage
 
-Program runs as a CLI application, taking a number of strings as input. Each line should be in format
+Program runs as a CLI application, taking a number of strings as input. Each line is expected to have the following format:
 
 	((<Integer ([*]?) <Variable>) (+|-) (\1))+ = <Integer>
 
@@ -41,7 +41,7 @@ The end of the input is denoted by an empty line.
 Initially program parses the entire user input (read from `STDIN`) into matrix form.
 Each input line is parsed using the following state machine:
 
-![state machine graph](https://github.com/shybovycha/uklady-rownian/raw/master/input_parser_grammar.png)
+![state machine graph](https://github.com/shybovycha/gauss-elimination/raw/master/input_parser_grammar.png)
 
 Each line is represented as a tuple `(list of multipliers, list of variable names)`.
 
