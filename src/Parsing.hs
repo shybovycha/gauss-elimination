@@ -46,8 +46,8 @@ zeroOrMore p = oneOrMore p <|> success []
 oneOrMore :: Parser a -> Parser [a]
 oneOrMore p = p >>= \a -> fmap (a:) (zeroOrMore p)
 
-zeroOrOne :: Parser a -> Parser [a]
-zeroOrOne p = (p >>= \s -> success [s]) <|> success []
+zeroOrOne :: Parser a -> Parser (Maybe a)
+zeroOrOne p = (p >>= \s -> success (Just s)) <|> success Nothing
 
 instance Functor Parser where
   fmap = liftM
