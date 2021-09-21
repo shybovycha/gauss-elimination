@@ -8,7 +8,7 @@ module Parsing (
   sat, 
   item,
   failure, success,
-  oneOrMore, zeroOrMore,
+  oneOrMore, zeroOrMore, zeroOrOne,
   (<|>),
   (<*>),
   (<$>),
@@ -45,6 +45,9 @@ zeroOrMore p = oneOrMore p <|> success []
 
 oneOrMore :: Parser a -> Parser [a]
 oneOrMore p = p >>= \a -> fmap (a:) (zeroOrMore p)
+
+zeroOrOne :: Parser a -> Parser [a]
+zeroOrOne p = (p >>= \s -> success [s]) <|> success []
 
 instance Functor Parser where
   fmap = liftM
