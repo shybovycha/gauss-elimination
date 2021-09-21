@@ -43,5 +43,5 @@ main :: IO ()
 main = do
   printHelp
   lines <- getInput
-  solution <- either (return) (solveSystem) (parseSystem lines)
+  solution <- maybe (return) (solveSystem) (parseSystem lines)
   putStrLn $ solution
