@@ -1,7 +1,7 @@
 import Data.Char (isSpace)
 import EquationParser (parseEquationSystem)
 import Fraction
-import Gauss (gaussSolve)
+import Gauss (gaussSolve, convertEquationToMatrix)
 
 -- | Removes blank characters (spaces) from the beginning and the end of the string
 strip ::
@@ -29,9 +29,6 @@ readStdinLinesUlessBlank accumulatedLinesIO = do
 getInput :: IO [String]
 getInput = readStdinLinesUlessBlank (return [])
 
-solveSystem :: ([[Fraction]], [String]) -> IO String
-solveSystem input = return (uncurry gaussSolve $ input)
-
 printHelp :: IO ()
 printHelp = do
   putStrLn "This app solves systems of linear equations."
@@ -44,5 +41,6 @@ main :: IO ()
 main = do
   printHelp
   lines <- getInput
-  solution <- maybe (return) (solveSystem) (parseEquationSystem lines)
-  putStrLn $ solution
+  solution <- maybe (return "") return (((uncurry gaussSolve) . convertEquationToMatrix) <$> (parseEquationSystem lines))
+  putStrLn solution
+  return ()

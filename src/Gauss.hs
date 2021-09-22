@@ -1,6 +1,8 @@
 module Gauss where
 
 import Fraction
+import Map
+import Set
 
 type Row = [Fraction]
 
@@ -35,8 +37,8 @@ gaussCompareRows r1 r2 = leadingZeros r2 - leadingZeros r1
 gaussSortMatrix :: Matrix -> Matrix
 gaussSortMatrix = flip quicksort gaussCompareRows
 
-gaussConvertMatrix :: [[Integer]] -> Matrix
-gaussConvertMatrix = map (map fromInteger)
+-- gaussConvertMatrix :: [[Fraction]] -> Matrix
+-- gaussConvertMatrix = map (map fromInteger)
 
 -- here, guaranteed that r1 has less leading zeros than r2
 gaussMakeZero :: Row -> Row -> Row
@@ -123,8 +125,23 @@ extractAndWrapResults (Inconsistent) _ = "System is inconsistent"
 extractAndWrapResults (Simple res) var_names = gaussExtractResults res var_names
 extractAndWrapResults (Infinite res) var_names = "System has infinite solutions. One of them is\n" ++ gaussExtractResults res var_names
 
-gaussSolveList :: [[Fraction]] -> Solution
-gaussSolveList = gaussSolveMatrix . gaussConvertMatrix
-
 gaussSolve :: [[Fraction]] -> [String] -> String
-gaussSolve = extractAndWrapResults . gaussSolveList
+gaussSolve = extractAndWrapResults . gaussSolveMatrix
+
+extractVariableNames :: [([(Fraction, String)], Fraction)] -> [String]
+extractVariableNames = Set.elements . foldl (\acc (equation, _) -> foldl (\acc1 (_, var) -> Set.put acc1 var) acc equation) emptySet
+
+extractFreeMembers :: [([(Fraction, String)], Fraction)] -> [Fraction]
+extractFreeMembers = map (\(_, free) -> free)
+
+mapVariablesToFactors :: [([(Fraction, String)], Fraction)] -> [Map String Fraction]
+mapVariablesToFactors = map (\(equation, _) -> foldl (\acc (factor, var) -> Map.put acc var factor) emptyMap equation)
+
+convertEquationToMatrix :: [([(Fraction, String)], Fraction)] -> ([[Fraction]], [String])
+convertEquationToMatrix equations = (matrixView, variableNames)
+  where
+    variableNames = extractVariableNames equations
+    mapView = mapVariablesToFactors equations
+    freeMembers = extractFreeMembers equations
+    mapWithFreeView = zip mapView freeMembers
+    matrixView = map (\(equationMap, free) -> (map (\var -> maybe 0 id (Map.get equationMap var)) variableNames) ++ [free]) mapWithFreeView
