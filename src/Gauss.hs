@@ -2,7 +2,7 @@ module Gauss where
 
 import Fraction
 
-type Row = [Frac Integer]
+type Row = [Fraction]
 
 type Matrix = [Row]
 
@@ -23,10 +23,10 @@ leadingZeros :: Row -> Int
 leadingZeros = length . takeWhile (== 0)
 
 -- check if matrix is inconsistent - it will have all zeroes except last column in at least one row
-inconsistentMatrix :: [[Frac Integer]] -> Bool
+inconsistentMatrix :: [[Fraction]] -> Bool
 inconsistentMatrix = any $ all (== 0) . reverse . drop 1
 
-infiniteSolutions :: [[Frac Integer]] -> Bool
+infiniteSolutions :: [[Fraction]] -> Bool
 infiniteSolutions = any $ all (== 0)
 
 gaussCompareRows :: Row -> Row -> Int
@@ -67,7 +67,7 @@ gaussFixCoefficients (r : rs) = map (/ factor) r : gaussFixCoefficients rs
 -- if a row contains exactly two numbers, the resulting variable is the free member (last number) over the last coefficient (the first number).
 -- if a row contains more numbers, then a simple conversion will be made:
 --
--- >>> gaussShowVars [3, 4, 5] ["x1", "x2"]
+-- >>> showVariableValues [3, 4, 5] ["x1", "x2"]
 -- "x1 = 5/3 - 4 * x2"
 --
 -- same as:
@@ -78,8 +78,8 @@ gaussFixCoefficients (r : rs) = map (/ factor) r : gaussFixCoefficients rs
 --
 -- also, it does not quite work as expected :P
 --
-gaussShowVars :: Row -> [String] -> String
-gaussShowVars r var_names
+showVariableValues :: Row -> [String] -> String
+showVariableValues r var_names
   | not (null other_coefficients) = var_str ++ other_vars_str
   | otherwise = var_str
   where
@@ -94,7 +94,7 @@ gaussShowVars r var_names
     var_str = (var_names !! index) ++ " = " ++ show (value / coefficient)
 
 gaussExtractResults :: Matrix -> [String] -> String
-gaussExtractResults rows var_names = foldl (\acc row -> gaussShowVars row var_names ++ "\n" ++ acc) "" rows
+gaussExtractResults rows var_names = foldl (\acc row -> showVariableValues row var_names ++ "\n" ++ acc) "" rows
 
 gaussRawSolveMatrix :: Matrix -> Matrix
 gaussRawSolveMatrix mat = mat3
@@ -123,8 +123,8 @@ extractAndWrapResults (Inconsistent) _ = "System is inconsistent"
 extractAndWrapResults (Simple res) var_names = gaussExtractResults res var_names
 extractAndWrapResults (Infinite res) var_names = "System has infinite solutions. One of them is\n" ++ gaussExtractResults res var_names
 
-gaussSolveList :: [[Integer]] -> Solution
+gaussSolveList :: [[Fraction]] -> Solution
 gaussSolveList = gaussSolveMatrix . gaussConvertMatrix
 
-gaussSolve :: [[Integer]] -> [String] -> String
+gaussSolve :: [[Fraction]] -> [String] -> String
 gaussSolve = extractAndWrapResults . gaussSolveList
