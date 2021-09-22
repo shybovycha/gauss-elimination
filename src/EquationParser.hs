@@ -1,18 +1,4 @@
-module EquationParser
-(
-  digit, 
-  naturalNumber, 
-  negativeInteger, 
-  integerNumber,
-  rationalNumber, 
-  rationalIntegerNumber,
-  rationalFactor,
-  equationFactor,
-  equationMember,
-  equation,
-  parseEquationSystem
-)
-where
+module EquationParser where
 
 import Data.Maybe
 import Data.Char (isDigit, isAlpha, isAlphaNum, isSpace)
@@ -95,4 +81,4 @@ equation = do
     return (members, freeMember)
 
 parseEquationSystem :: [String] -> Maybe [([(Fraction, String)], Fraction)]
-parseEquationSystem lines = fmap (map fst) (mapM (parse equation) lines)
+parseEquationSystem lines = (map fst) <$> mapM (parse equation) lines
