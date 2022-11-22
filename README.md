@@ -23,7 +23,7 @@ It is as simple as
 
 Program runs as a CLI application, taking a number of strings as input. Each line is expected to have the following format:
 
-	((<Integer ([*]?) <Variable>) (+|-) (\1))+ = <Integer>
+	((<Integer> ([*]?) <Variable>) (+|-) (\1))+ = <Integer>
 
 Where
 

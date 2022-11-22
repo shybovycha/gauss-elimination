@@ -14,7 +14,7 @@ naturalNumber = read <$> (oneOrMore digit)
 negativeInteger :: Parser Integer
 negativeInteger = do
   (sat (== '-'))
-  n <- naturalNumber 
+  n <- naturalNumber
   return (-1 * n)
 
 integerNumber :: Parser Integer
@@ -59,7 +59,7 @@ equationMember = do
     zeroOrMore (sat isSpace)
     zeroOrOne (sat (== '*'))
     zeroOrMore (sat isSpace)
-    
+
     nameFirst <- oneOrMore (sat isAlpha)
     nameRest <- zeroOrMore (sat isAlphaNum)
 
@@ -71,7 +71,7 @@ equationMember = do
 equation :: Parser ([(Fraction, String)], Fraction)
 equation = do
     members <- oneOrMore equationMember
-    
+
     zeroOrMore (sat isSpace)
     sat (== '=')
     zeroOrMore (sat isSpace)
