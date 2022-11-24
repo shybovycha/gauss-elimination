@@ -1,5 +1,143 @@
 {-|
   Monadic parser and helper functions.
+
+  More like a state machine for consuming the characters satisfying the rules, while they match (satisfy) the rules.
+
+  The idea is that the parser is an annotated function from an input string to _maybe_ something (parsing result) and a string (the unparsed part).
+  This module defines few trivial parsers which, when combined together, make up more complex and meaningful parsers.
+  The parsers presented in this module are:
+
+  * `success a` - always succeeds, returning a `Just (a, str)` (some default value and an entire input string)
+  * `failure` - always fails, returning `Nothing`
+  * `item` - parses any one arbitrary character, returning `Just (chr, str)`
+    (first character and the rest of the string) if the input string is non-empty or `Nothing` if the input string is empty
+  * `parser1 <|> parser2` - tries the first parser, `parser1` and if it succeeds - returns the result,
+    but if it fails - returns whatever running the second parser, `parser2` returns
+  * `parser1 <*> (a -> parser2)` - chains two parsers together, runs `parser1` and passes its output string to the second parser, `parser2`;
+    but since a parser result is a tuple, not just a string that can be passed to the second parser, this function takes a _function_
+    from the output of the first parser to the second parser
+
+  Since a parser is just a function `String -> Maybe (a, String)`, in order to __parse__ something, one needs to __run__ it.
+  Running a parser is as easy as executing a function `parse`, passing it a parser and an input string:
+
+  >>> parse item "123"
+
+  These basic building blocks are then extended with a bit more complex building blocks, which are a little bit more handy for building
+  complex parsers:
+
+  * `sat (ch -> Bool)` - returns a parser which only succeeds if the first character of a (non-empty) input string satisfies the function (`ch -> Bool`)
+  * `zeroOrMore p` - returns a parser which succeeds if the parser `p` (passed as a param) succeeds on the input string (potentially multiple times)
+    or fails - regardless, the resulting parser will succeed
+  * `zeroOrOne p` - returns a parser which succeeds if the parser `p` (passed as a param) succeeds exactly once on an input string or if it fails
+  * `oneOrOne p` - returns a parser which succeeds if the parser `p` (passed as a param) succeeds once or more on an input string
+
+  With these building blocks, one can build more complex parsers:
+
+  __parsing a digit:__
+
+  @
+  digit = sat isDigit
+  @
+
+  >>> (parse digit) "123abc"
+
+  __parsing a number (as a string):__
+
+  @
+  numberStr = oneOrMore (sat isDigit)
+  @
+
+  >>> (parse numberStr) "123abc"
+
+  Since `Parser` is an instance of `Monad`, you can use `fmap` or `<$>` to combine it with other functions:
+
+  __parsing a number (as a non-negative number):__
+
+  @
+  naturalNumber :: Parser Integer
+  naturalNumber = read <$> oneOrMore (sat isDigit)
+  @
+
+  >>> (parse naturalNumber) "123abc"
+
+  __parsiung a potentially negative number:__
+
+  @
+  sign = fmap (maybe 1 (\_ -> -1)) (zeroOrOne (sat (== '-')))
+  intNumber = ((*) <$> sign) <*> number
+  @
+
+  The code above requires a bit of an explanation, I guess.
+  The first part,
+
+  @
+  sign = fmap (maybe 1 (\_ -> -1)) (zeroOrOne (sat (== '-')))
+  @
+
+  parses a potential '-' sign at the beginning of a string and returns either `1` or `-1`, aka the sign multiplier.
+  The tricky part is `fmap (maybe 1 (\_ -> -1)) ...` - the `zeroOrOne` parser will return `Maybe a` -- that is, `Maybe (Maybe a, String)`.
+  So if the wrapped part (in this case - `sat (== '-')`) is present in the string, it will return `Just a` (in this case - `Just '-'`).
+  Hence we need to cast this `Maybe Char` to something reasonable - a number would do. We call the `maybe` helper with two params - the first
+  one is what would be returned if it is applied to `Nothing` and the second one is a function which will be called on the value wrapped in `Just`
+  the thing is applied to:
+
+  >>> maybe 1 (\_ -> -1) (Just '-')
+
+  >>> maybe 1 (\_ -> -1) Nothing
+
+  >>> maybe False (\ch -> ch == '-') (Just '-')
+
+  >>> maybe True (\ch -> ch == '-') Nothing
+
+  The `fmap` bit then applies this function (returned by `maybe 1 (\_ -> -1)`) to the value wrapped by the next argument:
+
+  >>> fmap (maybe 1 (\_ -> -1)) (Just (Just '-'))
+
+  >>> fmap (maybe 1 (\_ -> -1)) (Just Nothing)
+
+  This very same code could be rewritten as follows:
+
+  @
+  (maybe 1 (\_ -> -1)) <$> (Just Nothing)
+  @
+
+  Finally, the second part:
+
+  @
+  ((*) <$> sign) <*> number
+  @
+
+  The left part of it is just like the previously rewritten function from `fmap` to `<$>`, so this entire line can be written down as follows:
+
+  @
+  (fmap (*) sign) <*> number
+  @
+
+  What it does is applies the `(*)` function (multiplication) to the value wrapped in the second argument.
+  In this case it is `sign`, which is a `Parser Integer`. This is the tricky bit: the type of this expression is __not__ `Parser Integer`.
+  It is `Parser (a -> a)`, a parser of a function. This function, wrapped in a `Parser` type, can be applied to whatever other parser returns
+  and hence chained together.
+  The `<*>` operator, as mentioned before, chains the two parsers. So the entire expression applies the multiplication operation to the value
+  returned by the `sign` parser and the value returned by the `number` parser.
+
+  TL;DR: the whole thing _analyzes_ the first character of a string (without consuming it) and returns either `1` or `-1`; it then multiplies this value by the number
+  returned by the `number` parser.
+
+  >>> intNumber "-123"
+
+  >>> intNumber "123"
+
+  Using a `<|>` operator, one can parse integer (both negative and non-negative) numbers in this weird manner:
+
+  @
+  negativeNumber = (sat (== '-')) >> (* (-1)) <$> read <$> oneOrMore (sat isDigit)
+  positiveNumber = read <$> oneOrMore (sat isDigit)
+  number2 = negativeNumber <|> positiveNumber
+  @
+
+  >>> (parse number) "-42"
+
+  >>> (parse number) "123"
 -}
 
 module Parsing (
