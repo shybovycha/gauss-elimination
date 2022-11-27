@@ -5,7 +5,7 @@ data Frac a = a :% a
 type Fraction = Frac Integer
 
 (%) :: Integral a => a -> a -> Frac a
-n % d = (trim n d)
+n % d = trim n d
 
 infinity :: (Integral a) => (Frac a)
 infinity = 1 :% 0

@@ -23,16 +23,16 @@ It is as simple as
 
 Program runs as a CLI application, taking a number of strings as input. Each line is expected to have the following format:
 
-	((<Integer> ([*]?) <Variable>) (+|-) (\1))+ = <Integer>
+	((<Fraction> ([*]?) <Variable>) (+|-) (\1))+ = <Fraction>
 
 Where
 
-	<Integer> :: (-)?(\d+)?
+	<Fraction> :: (-)?(\d+)(\/(\d+))?
 	<Variable> :: [a-zA-Z0-9_]
 
 For instance:
 
-	-4 x1 + 15x2 - 7*x_3 = 19
+	-3/4 x1 + 11/15x2 - 7*x_3 = 19
 
 The end of the input is denoted by an empty line.
 
