@@ -10,6 +10,11 @@ type Matrix = [Row]
 
 data Solution = Simple Matrix | Infinite Matrix | Inconsistent
 
+instance Show Solution where
+  show (Simple mat) = "Simple solution: " ++ show mat
+  show (Infinite mat) = "Infinite solutions: " ++ show mat
+  show (Inconsistent) = "Inconsistent system"
+
 -- 1. Sort rows by count of leading zeros
 -- 2. Make zero in each row at its index position and add it to others making zero in that position from top to bottom
 -- 3. Do the same from bottom to the top
@@ -42,7 +47,9 @@ gaussSortMatrix = flip quicksort gaussCompareRows
 
 -- here, guaranteed that r1 has less leading zeros than r2
 gaussMakeZero :: Row -> Row -> Row
-gaussMakeZero r1 r2 = map (\(r1_elt, r2_elt) -> (r1_elt * factor) + r2_elt) (zip r1 r2)
+gaussMakeZero r1 r2
+  | index < length r2 = map (\(r1_elt, r2_elt) -> (r1_elt * factor) + r2_elt) (zip r1 r2)
+  | otherwise = r2
   where
     index = leadingZeros r1
     r1_head = r1 !! index
