@@ -16,7 +16,7 @@ build-type:          Simple
 executable gauss-elimination
   hs-source-dirs:      src
   main-is:             Main.hs
-  other-modules:       Fraction Gauss EquationParser Map
+  other-modules:       Fraction Gauss EquationParser Map Parsing Set
   build-depends:       base >=4.6
   default-language:    Haskell2010
   documentation:       true
