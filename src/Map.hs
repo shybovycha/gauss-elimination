@@ -22,7 +22,7 @@ emptyMap = Map []
 
 -- | Checks whether a key has a value in the map
 containsKey :: Eq k => Map k v -> k -> Bool
-containsKey (Map entries) key = length matchingEntries == 1
+containsKey (Map entries) key = not . null $ matchingEntries
   where
     matchingEntries = filter ((== key) . fst) entries
 
@@ -35,7 +35,7 @@ put (Map entries) key value = Map newEntries
 -- | Get a value by key
 get :: Eq k => Map k v -> k -> Maybe v
 get (Map entries) key
-  | length matchingElements == 1 = Just ((snd . head) matchingElements)
+  | not . null $ matchingElements = Just ((snd . head) matchingElements)
   | otherwise = Nothing
   where
     matchingElements = filter ((== key) . fst) entries
