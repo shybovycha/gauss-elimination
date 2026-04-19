@@ -13,21 +13,9 @@ strip = f . f
   where
     f = reverse . (dropWhile isSpace)
 
--- | Reads non-blank lines from STDIN and puts them into a list
-readStdinLinesUnlessBlank ::
-  -- | Non-blank lines read so far
-  [String] ->
-  -- | Non-blank lines read
-  IO [String]
-readStdinLinesUnlessBlank accumulatedLines = do
-  line <- strip <$> getLine
-  if null line
-    then return (reverse accumulatedLines)
-    else readStdinLinesUnlessBlank (line : accumulatedLines)
-
 -- | Read non-blank lines from STDIN
 getInput :: IO [String]
-getInput = readStdinLinesUnlessBlank []
+getInput = takeWhile (not . null) . map strip . lines <$> getContents
 
 printHelp :: IO ()
 printHelp = do
