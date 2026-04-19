@@ -59,8 +59,10 @@ gaussMakeZero r1 r2
 -- apply the "zeroing head" operation to all the rows except the first one.
 -- do this recursively for every row
 gaussReduce :: Matrix -> Matrix
-gaussReduce [] = []
-gaussReduce (r1 : rs) = r1 : gaussReduce (map (gaussMakeZero r1) rs)
+gaussReduce = gaussReduce' . gaussSortMatrix
+  where
+    gaussReduce' [] = []
+    gaussReduce' (r1 : rs) = r1 : gaussReduce (gaussSortMatrix (map (gaussMakeZero r1) rs))
 
 gaussFixCoefficients :: Matrix -> Matrix
 gaussFixCoefficients [] = []
