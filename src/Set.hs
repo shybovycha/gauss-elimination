@@ -6,7 +6,7 @@ emptySet :: Set a
 emptySet = Set []
 
 containsElement :: Eq v => Set v -> v -> Bool
-containsElement (Set entries) key = length matchingEntries == 1
+containsElement (Set entries) key = not . null $ matchingEntries
   where
     matchingEntries = filter (== key) entries
 
