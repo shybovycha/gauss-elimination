@@ -40,7 +40,7 @@ printHelp = do
 main :: IO ()
 main = do
   printHelp
-  lines <- getInput
-  solution <- maybe (return "") return (((uncurry gaussSolve) . convertEquationToMatrix) <$> (parseEquationSystem lines))
+  input <- getInput
+  solution <- maybe (return "") return (((uncurry gaussSolve) . convertEquationToMatrix) <$> (parseEquationSystem input))
   putStrLn solution
   return ()
