@@ -65,11 +65,11 @@ gaussReduce = gaussReduce' . gaussSortMatrix
     gaussReduce' (r1 : rs) = r1 : gaussReduce (gaussSortMatrix (map (gaussMakeZero r1) rs))
 
 gaussFixCoefficients :: Matrix -> Matrix
-gaussFixCoefficients [] = []
-gaussFixCoefficients (r : rs) = map (/ factor) r : gaussFixCoefficients rs
+gaussFixCoefficients = map normalize
   where
-    index = leadingZeros r
-    factor = r !! index
+    normalize r = case dropWhile (== 0) r of
+      [] -> r
+      (pivot : _) -> map (/ pivot) r
 
 -- converts the matrix row reduced by the Gauss algorithm down to few members to string representation of a result.
 -- technically it does not _show_ the results, it also calculates them.
