@@ -16,18 +16,18 @@ strip = f . f
 -- | Reads non-blank lines from STDIN and puts them into a list
 readStdinLinesUnlessBlank ::
   -- | Non-blank lines read so far
-  IO [String] ->
+  [String] ->
   -- | Non-blank lines read
   IO [String]
-readStdinLinesUnlessBlank accumulatedLinesIO = do
-  line <- fmap strip getLine
-  if length line < 1
-    then accumulatedLinesIO
-    else readStdinLinesUnlessBlank (fmap (++ [line]) accumulatedLinesIO)
+readStdinLinesUnlessBlank accumulatedLines = do
+  line <- strip <$> getLine
+  if null line
+    then return (reverse accumulatedLines)
+    else readStdinLinesUnlessBlank (line : accumulatedLines)
 
 -- | Read non-blank lines from STDIN
 getInput :: IO [String]
-getInput = readStdinLinesUnlessBlank (return [])
+getInput = readStdinLinesUnlessBlank []
 
 printHelp :: IO ()
 printHelp = do
