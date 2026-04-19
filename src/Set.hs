@@ -2,7 +2,7 @@ module Set where
 
 data Set a = Set [a] deriving Show
 
-emptySet :: Set [a]
+emptySet :: Set a
 emptySet = Set []
 
 containsElement :: Eq v => Set v -> v -> Bool
