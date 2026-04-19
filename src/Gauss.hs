@@ -29,13 +29,6 @@ quicksort (x : xs) cmp = (quicksort lesser cmp) ++ [x] ++ (quicksort greater cmp
 leadingZeros :: Row -> Int
 leadingZeros = length . takeWhile (== 0)
 
--- check if matrix is inconsistent - it will have all zeroes except last column in at least one row
-inconsistentMatrix :: [[Fraction]] -> Bool
-inconsistentMatrix = any $ all (== 0) . reverse . drop 1
-
-infiniteSolutions :: [[Fraction]] -> Bool
-infiniteSolutions = any $ all (== 0)
-
 gaussCompareRows :: Row -> Row -> Int
 gaussCompareRows r1 r2 = leadingZeros r2 - leadingZeros r1
 
