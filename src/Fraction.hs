@@ -51,11 +51,7 @@ instance (Integral a, Show a) => Show (Frac a) where
       f = trim a b
 
 instance (Integral a) => Eq (Frac a) where
-  (x :% y) == (x' :% y') = (x * g) == (x' * g)
-    where
-      g = gcd y y'
+  (x :% y) == (x' :% y') = (x * y') == (x' * y)
 
 instance (Integral a) => Ord (Frac a) where
-  (x :% y) <= (x' :% y') = (x * g) <= (x' * g)
-    where
-      g = gcd y y'
+  (x :% y) <= (x' :% y') = (x * y') <= (x' * y)
