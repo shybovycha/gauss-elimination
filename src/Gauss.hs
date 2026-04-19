@@ -13,7 +13,7 @@ data Solution = Simple Matrix | Infinite Matrix | Inconsistent
 instance Show Solution where
   show (Simple mat) = "Simple solution: " ++ show mat
   show (Infinite mat) = "Infinite solutions: " ++ show mat
-  show (Inconsistent) = "Inconsistent system"
+  show Inconsistent = "Inconsistent system"
 
 -- 1. Sort rows by count of leading zeros
 -- 2. Make zero in each row at its index position and add it to others making zero in that position from top to bottom
@@ -128,7 +128,7 @@ gaussSolveMatrix mat
     res2' = gaussRawSolveMatrix mat2'
 
 extractAndWrapResults :: Solution -> [String] -> String
-extractAndWrapResults (Inconsistent) _ = "System is inconsistent"
+extractAndWrapResults Inconsistent _ = "System is inconsistent"
 extractAndWrapResults (Simple res) var_names = gaussExtractResults res var_names
 extractAndWrapResults (Infinite res) var_names = "System has infinite solutions. One of them is\n" ++ gaussExtractResults res var_names
 
@@ -139,7 +139,7 @@ extractVariableNames :: [([(Fraction, String)], Fraction)] -> [String]
 extractVariableNames = Set.elements . foldl (\acc (equation, _) -> foldl (\acc1 (_, var) -> Set.put acc1 var) acc equation) emptySet
 
 extractFreeMembers :: [([(Fraction, String)], Fraction)] -> [Fraction]
-extractFreeMembers = map (\(_, free) -> free)
+extractFreeMembers = map snd
 
 mapVariablesToFactors :: [([(Fraction, String)], Fraction)] -> [Map String Fraction]
 mapVariablesToFactors = map (\(equation, _) -> foldl (\acc (factor, var) -> Map.put acc var factor) emptyMap equation)
