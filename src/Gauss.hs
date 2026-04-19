@@ -85,8 +85,6 @@ gaussFixCoefficients (r : rs) = map (/ factor) r : gaussFixCoefficients rs
 -- 3x1 = 5 - 4x2
 -- x1 = (5 - 4x2) / 3
 --
--- also, it does not quite work as expected :P
---
 showVariableValues :: Row -> [String] -> String
 showVariableValues r var_names
   | not (null other_coefficients) = var_str ++ other_vars_str
