@@ -41,6 +41,6 @@ main :: IO ()
 main = do
   printHelp
   input <- getInput
-  solution <- maybe (return "") return (((uncurry gaussSolve) . convertEquationToMatrix) <$> (parseEquationSystem input))
-  putStrLn solution
-  return ()
+  putStrLn $ case parseEquationSystem input of
+    Nothing -> "Could not parse input"
+    Just system -> uncurry gaussSolve (convertEquationToMatrix system)
