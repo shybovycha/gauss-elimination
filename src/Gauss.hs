@@ -105,27 +105,26 @@ showVariableValues r var_names
 gaussExtractResults :: Matrix -> [String] -> String
 gaussExtractResults rows var_names = foldl (\acc row -> showVariableValues row var_names ++ "\n" ++ acc) "" rows
 
-gaussRawSolveMatrix :: Matrix -> Matrix
-gaussRawSolveMatrix mat = mat3
-  where
-    mat1 = gaussReduce mat
-    mat2 = gaussReduce $ reverse mat1
-    mat3 = gaussFixCoefficients $ reverse mat2
+isZeroRow :: Row -> Bool
+isZeroRow = all (== 0)
+
+isInconsistentRow :: Row -> Bool
+isInconsistentRow []  = False
+isInconsistentRow row = all (== 0) (init row) && last row /= 0
 
 gaussSolveMatrix :: Matrix -> Solution
 gaussSolveMatrix mat
-  | infiniteSolutions mat1 = Infinite res1'
-  | infiniteSolutions mat2 = Infinite res2'
-  | inconsistentMatrix mat3 = Inconsistent
-  | otherwise = Simple mat3
+  | any isInconsistentRow m3 = Inconsistent
+  | length pivots < numVars = Infinite (gaussFixCoefficients pivots)
+  | otherwise = Simple (gaussFixCoefficients pivots)
   where
-    mat1 = gaussReduce mat
-    mat2 = gaussReduce $ reverse mat1
-    mat3 = gaussFixCoefficients $ reverse mat2
-    mat1' = filter (not . all (== 0)) mat1
-    mat2' = filter (not . all (== 0)) mat2
-    res1' = gaussRawSolveMatrix mat1'
-    res2' = gaussRawSolveMatrix mat2'
+    m1 = gaussReduce mat
+    m2 = gaussReduce (reverse m1)
+    m3 = reverse m2
+    pivots = filter (not . isZeroRow) m3
+    numVars = case mat of
+      (r : _) -> length r - 1
+      [] -> 0
 
 extractAndWrapResults :: Solution -> [String] -> String
 extractAndWrapResults Inconsistent _ = "System is inconsistent"
