@@ -154,9 +154,7 @@ module Parsing (
 )
 where
 
-import Data.Char
-import Data.Maybe
-import Control.Applicative (Applicative(..), Alternative(..))
+import Control.Applicative (Alternative(..))
 import Control.Monad (liftM, ap)
 
 {-|
@@ -201,7 +199,7 @@ item = P $ \str -> case str of
   and succeeds only if that predicate satisfies the first character of a string.
 -}
 sat :: (Char -> Bool) -> Parser Char
-sat pred = item >>= (\str -> if pred str then success str else failure)
+sat predicate = item >>= (\str -> if predicate str then success str else failure)
 
 {-|
   A combined parser, which takes a parser as an argument and returns a combination of parsers.

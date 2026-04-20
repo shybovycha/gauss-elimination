@@ -13,7 +13,7 @@ naturalNumber = read <$> (oneOrMore digit)
 
 negativeInteger :: Parser Integer
 negativeInteger = do
-  (sat (== '-'))
+  _ <- sat (== '-')
   n <- naturalNumber
   return (-1 * n)
 
@@ -22,10 +22,10 @@ integerNumber = naturalNumber <|> negativeInteger
 
 rationalNumber :: Parser Fraction
 rationalNumber = do
-  nominator <- integerNumber
-  sat (== '/')
-  denominator <- naturalNumber
-  return (nominator % denominator)
+  nom <- integerNumber
+  _ <- sat (== '/')
+  denom <- naturalNumber
+  return (nom % denom)
 
 rationalIntegerNumber :: Parser Fraction
 rationalIntegerNumber = fmap (% 1) integerNumber
@@ -46,7 +46,7 @@ equationFactor :: Parser Fraction
 equationFactor = do
     _sign <- factorSign
 
-    zeroOrMore (sat isSpace)
+    _ <- zeroOrMore (sat isSpace)
 
     factor <- fmap (fromMaybe (1%1)) (zeroOrOne rationalFactor)
 
@@ -56,14 +56,14 @@ equationMember :: Parser (Fraction, String)
 equationMember = do
     factor <- equationFactor
 
-    zeroOrMore (sat isSpace)
-    zeroOrOne (sat (== '*'))
-    zeroOrMore (sat isSpace)
+    _ <- zeroOrMore (sat isSpace)
+    _ <- zeroOrOne (sat (== '*'))
+    _ <- zeroOrMore (sat isSpace)
 
     nameFirst <- oneOrMore (sat isAlpha)
     nameRest <- zeroOrMore (sat isAlphaNum)
 
-    zeroOrMore (sat isSpace)
+    _ <- zeroOrMore (sat isSpace)
 
     return (factor, nameFirst ++ nameRest)
 
@@ -72,13 +72,13 @@ equation :: Parser ([(Fraction, String)], Fraction)
 equation = do
     members <- oneOrMore equationMember
 
-    zeroOrMore (sat isSpace)
-    sat (== '=')
-    zeroOrMore (sat isSpace)
+    _ <- zeroOrMore (sat isSpace)
+    _ <- sat (== '=')
+    _ <- zeroOrMore (sat isSpace)
 
     freeMember <- rationalFactor
 
     return (members, freeMember)
 
 parseEquationSystem :: [String] -> Maybe [([(Fraction, String)], Fraction)]
-parseEquationSystem lines = (map fst) <$> mapM (parse equation) lines
+parseEquationSystem ls = (map fst) <$> mapM (parse equation) ls

@@ -29,7 +29,7 @@ instance (Integral a) => Num (Frac a) where
 
   negate (x :% y) = (- x) :% y
   abs (x :% y) = abs x :% y
-  signum (x :% y)
+  signum (x :% _)
     | x > 0 = 1
     | x < 0 = -1
     | otherwise = 0
