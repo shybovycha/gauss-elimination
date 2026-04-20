@@ -1,4 +1,13 @@
 {-|
+$setup
+>>> import Data.Char (isDigit)
+>>> let digit = sat isDigit
+>>> let naturalNumber = read <$> oneOrMore digit :: Parser Integer
+>>> let sign = fmap (maybe 1 (\_ -> -1)) (zeroOrOne (sat (== '-')))
+>>> let intNumber = ((*) <$> sign) <*> naturalNumber
+-}
+
+{-|
   Monadic parser and helper functions.
 
   More like a state machine for consuming the characters satisfying the rules, while they match (satisfy) the rules.
@@ -36,16 +45,13 @@
 
   __parsing a digit:__
 
-  $setup
-  >>> import Data.Char (isDigit)
-
-  >>> digit = sat isDigit
+  >>> let digit = sat isDigit
   >>> (parse digit) "123abc"
   Just ('1',"23abc")
 
   __parsing a number (as a string):__
 
-  >>> numberStr = oneOrMore (sat isDigit)
+  >>> let numberStr = oneOrMore (sat isDigit)
   >>> (parse numberStr) "123abc"
   Just ("123","abc")
 
@@ -58,8 +64,6 @@
   naturalNumber = read <$> oneOrMore digit
   @
 
-  >>> import Data.Char (isDigit)
-  >>> let digit = sat isDigit
   >>> let naturalNumber = read <$> oneOrMore digit :: Parser Integer
   >>> (parse naturalNumber) "123abc"
   Just (123,"abc")
@@ -136,34 +140,25 @@
   TL;DR: the whole thing _analyzes_ the first character of a string (without consuming it) and returns either `1` or `-1`; it then multiplies this value by the number
   returned by the `number` parser.
 
-  >>> import Data.Char (isDigit)
-  >>> let digit = sat isDigit
-  >>> let number = read <$> oneOrMore digit :: Parser Integer
-  >>> let sign = fmap (maybe 1 (\_ -> -1)) (zeroOrOne (sat (== '-')))
-  >>> let intNumber = ((*) <$> sign) <*> number
+  @
+  sign = fmap (maybe 1 (\_ -> -1)) (zeroOrOne (sat (== '-')))
+  intNumber = ((*) <$> sign) <*> number
+  @
+
   >>> (parse intNumber) "-123"
   Just (-123,"")
 
-  >>> import Data.Char (isDigit)
-  >>> let digit = sat isDigit
-  >>> let number = read <$> oneOrMore digit :: Parser Integer
-  >>> let sign = fmap (maybe 1 (\_ -> -1)) (zeroOrOne (sat (== '-')))
-  >>> let intNumber = ((*) <$> sign) <*> number
   >>> (parse intNumber) "123"
   Just (123,"")
   
   Using a `<|>` operator, one can parse integer (both negative and non-negative) numbers in this weird manner:
 
-  >>> import Data.Char (isDigit)
-  >>> let digit = sat isDigit
   >>> let negativeNumber = (sat (== '-')) >> (* (-1)) <$> read <$> oneOrMore (sat isDigit)
   >>> let positiveNumber = read <$> oneOrMore (sat isDigit)
   >>> let number = negativeNumber <|> positiveNumber
   >>> (parse number) "-42"
   Just (-42,"")
 
-  >>> import Data.Char (isDigit)
-  >>> let digit = sat isDigit
   >>> let negativeNumber = (sat (== '-')) >> (* (-1)) <$> read <$> oneOrMore (sat isDigit)
   >>> let positiveNumber = read <$> oneOrMore (sat isDigit)
   >>> let number = negativeNumber <|> positiveNumber
