@@ -1,17 +1,14 @@
+module Main where
+
 import Data.Char (isSpace)
 import EquationParser (parseEquationSystem)
-import Fraction
-import Gauss (gaussSolve, convertEquationToMatrix)
+import Gauss (convertEquationToMatrix, gaussSolve)
 
 -- | Removes blank characters (spaces) from the beginning and the end of the string
-strip ::
-  -- | Input string
-  String ->
-  -- | String with space characters stripped
-  String
+strip :: String -> String
 strip = f . f
   where
-    f = reverse . (dropWhile isSpace)
+    f = reverse . dropWhile isSpace
 
 -- | Read non-blank lines from STDIN
 getInput :: IO [String]
