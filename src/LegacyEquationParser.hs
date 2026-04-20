@@ -1,5 +1,7 @@
 {--|
-  Parser for the user input. Parses single lines into equations and lists of lines into equation systems.
+  Parser for the user input.
+  Parses single lines into equations and lists of lines into equation systems.
+  For pedagogical purposes only to demonstrate how naive approach compares to parser combinators.
 --}
 
 module LegacyEquationParser where
