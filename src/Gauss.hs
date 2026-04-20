@@ -40,14 +40,11 @@ gaussSortMatrix = flip quicksort gaussCompareRows
 
 -- here, guaranteed that r1 has less leading zeros than r2
 gaussMakeZero :: Row -> Row -> Row
-gaussMakeZero r1 r2
-  | index < length r2 = map (\(r1_elt, r2_elt) -> (r1_elt * factor) + r2_elt) (zip r1 r2)
-  | otherwise = r2
-  where
-    index = leadingZeros r1
-    r1_head = r1 !! index
-    r2_head = r2 !! index
-    factor = (-1 * r2_head) / r1_head
+gaussMakeZero r1 r2 = case dropWhile ((== 0) . fst) (zip r1 r2) of
+  [] -> r2
+  ((r1_head, r2_head) : _) ->
+    let factor = -r2_head / r1_head
+    in zipWith (\a b -> a * factor + b) r1 r2
 
 -- apply the "zeroing head" operation to all the rows except the first one.
 -- do this recursively for every row
