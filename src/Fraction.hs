@@ -1,5 +1,7 @@
 module Fraction where
 
+import qualified Data.Ratio as Ratio
+
 data Frac a = a :% a
 
 type Fraction = Frac Integer
@@ -38,6 +40,8 @@ instance (Integral a) => Num (Frac a) where
 
 instance (Integral a) => Fractional (Frac a) where
   (x :% y) / (x' :% y') = trim (x * y') (y * x')
+
+  fromRational r = trim (fromInteger (Ratio.numerator r)) (fromInteger (Ratio.denominator r))
 
 instance (Integral a, Show a) => Show (Frac a) where
   show (a :% b)
