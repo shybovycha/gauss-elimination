@@ -88,7 +88,7 @@ showVariableValues r var_names
     index = leadingZeros r
     coefficient = r !! index
     value = last r
-    raw_row = reverse . drop 1 . reverse $ r -- row coefficients, except the free member
+    raw_row = init r -- row coefficients without the free member
     elements_count = length raw_row
     other_coefficients = filter (\(k, k_idx) -> k /= 0 && k_idx /= index) (zip raw_row [0 .. elements_count])
     subtract_coefficient k = if k < 0 then " + " ++ show (- k) else " - " ++ show k
