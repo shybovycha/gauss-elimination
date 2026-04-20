@@ -1,13 +1,4 @@
 {-|
-$setup
->>> import Data.Char (isDigit)
->>> let digit = sat isDigit
->>> let naturalNumber = read <$> oneOrMore digit :: Parser Integer
->>> let sign = fmap (maybe 1 (\_ -> -1)) (zeroOrOne (sat (== '-')))
->>> let intNumber = ((*) <$> sign) <*> naturalNumber
--}
-
-{-|
   Monadic parser and helper functions.
 
   More like a state machine for consuming the characters satisfying the rules, while they match (satisfy) the rules.
@@ -103,12 +94,12 @@ $setup
 
   >>> maybe True (\ch -> ch == '-') Nothing
   True
-  
+
   The `fmap` bit then applies this function (returned by `maybe 1 (\_ -> -1)`) to the value wrapped by the next argument:
 
   >>> fmap (maybe 1 (\_ -> -1)) (Just (Just '-'))
   Just (-1)
-  
+
   >>> fmap (maybe 1 (\_ -> -1)) (Just Nothing)
   Just 1
 
@@ -150,7 +141,7 @@ $setup
 
   >>> (parse intNumber) "123"
   Just (123,"")
-  
+
   Using a `<|>` operator, one can parse integer (both negative and non-negative) numbers in this weird manner:
 
   >>> let negativeNumber = (sat (== '-')) >> (* (-1)) <$> read <$> oneOrMore (sat isDigit)
@@ -183,6 +174,14 @@ where
 import Control.Applicative (Alternative(..))
 import Control.Monad (liftM, ap)
 
+{- $setup
+>>> import Data.Char (isDigit)
+>>> let digit = sat isDigit
+>>> let naturalNumber = read <$> oneOrMore digit :: Parser Integer
+>>> let sign = fmap (maybe 1 (\_ -> -1)) (zeroOrOne (sat (== '-')))
+>>> let intNumber = ((*) <$> sign) <*> naturalNumber
+-}
+
 {-|
   Type constructor: a parser is a function from a string
   that returns a Maybe of something that was parsed and
@@ -201,12 +200,24 @@ parse (P fn) str = fn str
 
 {-|
   A utility parser which always fails (returns Nothing).
+
+  >>> parse (failure :: Parser Char) "abc"
+  Nothing
+
+  >>> parse (failure :: Parser Int) ""
+  Nothing
 -}
 failure :: Parser a
 failure = P (\_ -> Nothing)
 
 {-|
   A utility parser which always succeeds (returns a Just of a default value and an entire string).
+
+  >>> parse (success 42) "abc"
+  Just (42,"abc")
+
+  >>> parse (success 'z') ""
+  Just ('z',"")
 -}
 success :: a -> Parser a
 success a = P (\str -> Just (a, str))
@@ -214,6 +225,15 @@ success a = P (\str -> Just (a, str))
 {-|
   A parser which expects any one or more characters in a string.
   Would fail for an empty string.
+
+  >>> parse item "abc"
+  Just ('a',"bc")
+
+  >>> parse item "a"
+  Just ('a',"")
+
+  >>> parse item ""
+  Nothing
 -}
 item :: Parser Char
 item = P $ \str -> case str of
@@ -223,6 +243,18 @@ item = P $ \str -> case str of
 {-|
   A parser which takes a predicate (function from character to boolean)
   and succeeds only if that predicate satisfies the first character of a string.
+
+  >>> parse (sat (== 'a')) "abc"
+  Just ('a',"bc")
+
+  >>> parse (sat (== 'a')) "xyz"
+  Nothing
+
+  >>> parse (sat (== 'a')) ""
+  Nothing
+
+  >>> (parse (sat isDigit)) "123abc"
+  Just ('1',"23abc")
 -}
 sat :: (Char -> Bool) -> Parser Char
 sat predicate = item >>= (\str -> if predicate str then success str else failure)
@@ -236,6 +268,15 @@ sat predicate = item >>= (\str -> if predicate str then success str else failure
 
   This utilizes the combination operator of a parser, `<|>` (see below)
   to combine two parsers together.
+
+  >>> parse (zeroOrMore (sat (== 'a'))) "aaab"
+  Just ("aaa","b")
+
+  >>> parse (zeroOrMore (sat (== 'a'))) "xyz"
+  Just ("","xyz")
+
+  >>> parse (zeroOrMore (sat (== 'a'))) ""
+  Just ("","")
 -}
 zeroOrMore :: Parser a -> Parser [a]
 zeroOrMore p = oneOrMore p <|> success []
@@ -249,6 +290,15 @@ zeroOrMore p = oneOrMore p <|> success []
 
   This utilizes the `bind` (aka monadic `map`) operator of a parser
   to combine two parsers together.
+
+  >>> (parse (oneOrMore (sat isDigit))) "123abc"
+  Just ("123","abc")
+
+  >>> (parse (oneOrMore digit)) "abc"
+  Nothing
+
+  >>> (parse (oneOrMore digit)) ""
+  Nothing
 -}
 oneOrMore :: Parser a -> Parser [a]
 oneOrMore p = p >>= (\a -> fmap (a:) (zeroOrMore p))
@@ -261,16 +311,43 @@ oneOrMore p = p >>= (\a -> fmap (a:) (zeroOrMore p))
 
   This utilizes the combination operator of a parser, `<|>` (see below)
   to combine two parsers together.
+
+  >>> parse (zeroOrOne (sat (== '-'))) "-42"
+  Just (Just '-',"42")
+
+  >>> parse (zeroOrOne (sat (== '-'))) "42"
+  Just (Nothing,"42")
+
+  >>> parse (zeroOrOne (sat (== '-'))) ""
+  Just (Nothing,"")
 -}
 zeroOrOne :: Parser a -> Parser (Maybe a)
 zeroOrOne p = (p >>= (\a -> success (Just a))) <|> success Nothing
 
 instance Functor Parser where
+  {-|
+    `fmap` / `<$>` transforms the parsed value without touching the unparsed remainder.
+
+    >>> parse (fmap succ item) "abc"
+    Just ('b',"bc")
+
+    >>> parse (read <$> oneOrMore digit :: Parser Int) "42xyz"
+    Just (42,"xyz")
+  -}
   fmap = liftM
 
 instance Applicative Parser where
   pure = success -- | constructs a parser with a default "success" behaviour
 
+  {-|
+    `<*>` chains two parsers, applying the function produced by the first to the value produced by the second.
+
+    >>> parse ((,) <$> item <*> item) "abc"
+    Just (('a','b'),"c")
+
+    >>> parse ((+) <$> naturalNumber <*> (sat (== '+') >> naturalNumber)) "12+34"
+    Just (46,"")
+  -}
   (<*>) = ap
 
 instance Monad Parser where
@@ -279,6 +356,12 @@ instance Monad Parser where
     It short-circuit the execution if a parser `p1` fails.
     If parser `p1` succeeds, it will return the result of running parser `p2` on the unparsed portion of a string,
     returned by running `p1`.
+
+    >>> parse (item >>= \c -> item >>= \_ -> return c) "abc"
+    Just ('a',"c")
+
+    >>> parse (failure >>= \_ -> item :: Parser Char) "abc"
+    Nothing
   -}
   p1 >>= p2 = P $ \str -> case parse p1 str of
     Just (a, str') -> parse (p2 a) str'
@@ -293,6 +376,15 @@ instance Alternative Parser where
     Instance of a `<|>` operator, which combines two parsers together in a "if one fails - try another" manner.
     If parser `p1` fails, it will return the result of running parser `p1` on an input string.
     If parser `p1` fails, it will run parser `p2` on an input string and return that result.
+
+    >>> parse (sat (== 'a') <|> sat (== 'b')) "abc"
+    Just ('a',"bc")
+
+    >>> parse (sat (== 'a') <|> sat (== 'b')) "bcd"
+    Just ('b',"cd")
+
+    >>> parse (sat (== 'a') <|> sat (== 'b')) "zzz"
+    Nothing
   -}
   p1 <|> p2 = P $ \str -> case parse p1 str of
     Nothing -> parse p2 str
