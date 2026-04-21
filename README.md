@@ -19,6 +19,12 @@ Run application with
 
     cabal run
 
+## Tests
+
+The tests are currently implemented as doctests. Run them with
+
+    cabal test doctests
+
 ## Use
 
 The application is a CLI tool, taking a number of lines as input. The end of input is marked by an empty line.
