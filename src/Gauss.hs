@@ -105,7 +105,7 @@ showVariableValues r var_names
     var_str = (var_names !! index) ++ " = " ++ show (value / coefficient)
 
 gaussExtractResults :: Matrix -> [String] -> String
-gaussExtractResults rows var_names = foldl (\acc row -> showVariableValues row var_names ++ "\n" ++ acc) "" rows
+gaussExtractResults rows var_names = foldl (\acc row -> acc ++ showVariableValues row var_names ++ "\n") "" rows
 
 isZeroRow :: Row -> Bool
 isZeroRow = all (== 0)
