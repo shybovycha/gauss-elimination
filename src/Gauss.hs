@@ -15,9 +15,13 @@ instance Show Solution where
   show (Infinite mat) = "Infinite solutions: " ++ show mat
   show Inconsistent = "Inconsistent system"
 
--- 1. Sort rows by count of leading zeros
--- 2. Make zero in each row at its index position and add it to others making zero in that position from top to bottom
--- 3. Do the same from bottom to the top
+{-|
+Overall algorithm:
+
+1. Sort rows by count of leading zeros
+2. Make zero in each row at its index position and add it to others making zero in that position from top to bottom
+3. Do the same from bottom to the top
+-}
 
 quicksort :: (Ord a) => [a] -> (a -> a -> Int) -> [a]
 quicksort [] _ = []
@@ -61,22 +65,23 @@ gaussFixCoefficients = map normalize
       [] -> r
       (pivot : _) -> map (/ pivot) r
 
--- converts the matrix row reduced by the Gauss algorithm down to few members to string representation of a result.
--- technically it does not _show_ the results, it also calculates them.
---
--- if a row contains just one number, it is the free member and it will be the resulting variable.
--- if a row contains exactly two numbers, the resulting variable is the free member (last number) over the last coefficient (the first number).
--- if a row contains more numbers, then a simple conversion will be made:
---
--- >>> showVariableValues [3, 4, 5] ["x1", "x2"]
--- "x1 = 5/3 - 4 * x2"
---
--- same as:
---
--- 3x1 + 4x2 = 5
--- 3x1 = 5 - 4x2
--- x1 = (5 - 4x2) / 3
---
+{-|
+  converts the matrix row reduced by the Gauss algorithm down to few members to string representation of a result.
+  technically it does not _show_ the results, it also calculates them.
+
+  if a row contains just one number, it is the free member and it will be the resulting variable.
+  if a row contains exactly two numbers, the resulting variable is the free member (last number) over the last coefficient (the first number).
+  if a row contains more numbers, then a simple conversion will be made:
+
+  >>> showVariableValues [3, 4, 5] ["x1", "x2"]
+  "x1 = 5/3 - 4 * x2"
+
+  same as:
+
+  3x1 + 4x2 = 5
+  3x1 = 5 - 4x2
+  x1 = (5 - 4x2) / 3
+-}
 showVariableValues :: Row -> [String] -> String
 showVariableValues r var_names
   | not (null other_coefficients) = var_str ++ other_vars_str
@@ -121,6 +126,30 @@ extractAndWrapResults Inconsistent _ = "System is inconsistent"
 extractAndWrapResults (Simple res) var_names = gaussExtractResults res var_names
 extractAndWrapResults (Infinite res) var_names = "System has infinite solutions. One of them is\n" ++ gaussExtractResults res var_names
 
+{-|
+  Solve a system of linear equations:
+
+  >>> gaussSolve [[2, 3, 8], [1, -1, 1]] ["x", "y"]
+  "x = 4 - 3/2 * y\ny = 6/5\n"
+
+  >>> gaussSolve [[1, 1, 1, 6], [2, -1, 1, 3], [1, 2, -1, 2]] ["x", "y", "z"]
+  "x = 6 - 1 * y - 1 * z\ny = 3 - 1/3 * z\nz = 3\n"
+  
+  same as:
+  "x = 1\ny = 2\nz = 3\n"
+
+  >>> gaussSolve [[3, 2, -1, 1], [2, -2, 4, -2], [-1, 1 % 2, -1, 0]] ["x", "y", "z"]
+  "x = 1\ny = 2\nz = 3\n"
+
+  >>> gaussSolve [ [3, 2, -1, 1] , [2, -2, 4, -2] , [-1, 1 % 2, -1, 0] ] ["x", "y", "z"]
+  "x = 1\ny = -2\nz = -2\n"
+
+  >>> gaussSolve [[1, 1, 2], [2, 2, 5]] ["x", "y"]
+  "System is inconsistent\n"
+
+  >>> gaussSolve [ [1, 1, 1, 6] , [2, 2, 2, 12] , [3, 3, 3, 18] ] ["x", "y", "z"]
+  "System has infinite solutions. One of them is\nx = 6 - 1 * y - 1 * z\n"
+-}
 gaussSolve :: [[Fraction]] -> [String] -> String
 gaussSolve = extractAndWrapResults . gaussSolveMatrix
 

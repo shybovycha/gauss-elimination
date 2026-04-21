@@ -1,4 +1,4 @@
-{-- |
+{-|
   Suboptiomal yet trivial Set implementation.
   All operations have O(n) complexity.
   For pedagogical purposes only.

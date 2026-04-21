@@ -1,4 +1,4 @@
-{-- |
+{-|
   Suboptiomal yet trivial Map implementation.
   All operations have O(n) complexity.
   For pedagogical purposes only.
