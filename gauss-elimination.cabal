@@ -1,7 +1,7 @@
 cabal-version:      3.4
 
 name:               gauss-elimination
-version:            0.2.1.0
+version:            0.3.0.0
 synopsis:           Linear equation system solver using Gauss elimination algorithm
 description:
   Coursework for "Functional Programming" course at Jagiellonian University.
