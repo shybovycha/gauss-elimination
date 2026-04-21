@@ -56,7 +56,14 @@ gaussReduce :: Matrix -> Matrix
 gaussReduce = gaussReduce' . gaussSortMatrix
   where
     gaussReduce' [] = []
-    gaussReduce' (r1 : rs) = r1 : gaussReduce (gaussSortMatrix (map (gaussMakeZero r1) rs))
+    gaussReduce' (r1 : rs) = r1 : gaussReduce' (gaussSortMatrix (map (gaussMakeZero r1) rs))
+
+-- similar to gaussReduce, but does not sort the matrix by leading zeros to eliminate all the factors except <current row variable>
+gaussReduceBack :: Matrix -> Matrix
+gaussReduceBack = reverse . gaussReduceBack' . reverse
+  where
+    gaussReduceBack' [] = []
+    gaussReduceBack' (r1 : rs) = r1 : gaussReduceBack' (map (gaussMakeZero r1) rs)
 
 gaussFixCoefficients :: Matrix -> Matrix
 gaussFixCoefficients = map normalize
@@ -114,9 +121,9 @@ gaussSolveMatrix mat
   | otherwise = Simple (gaussFixCoefficients pivots)
   where
     m1 = gaussReduce mat
-    m2 = gaussReduce (reverse m1)
+    m2 = gaussReduceBack m1
     m3 = reverse m2
-    pivots = filter (not . isZeroRow) m3
+    pivots = filter (not . isZeroRow) m2
     numVars = case mat of
       (r : _) -> length r - 1
       [] -> 0
@@ -130,22 +137,19 @@ extractAndWrapResults (Infinite res) var_names = "System has infinite solutions.
   Solve a system of linear equations:
 
   >>> gaussSolve [[2, 3, 8], [1, -1, 1]] ["x", "y"]
-  "x = 4 - 3/2 * y\ny = 6/5\n"
+  "x = 11/5\ny = 6/5\n"
 
   >>> gaussSolve [[1, 1, 1, 6], [2, -1, 1, 3], [1, 2, -1, 2]] ["x", "y", "z"]
-  "x = 6 - 1 * y - 1 * z\ny = 3 - 1/3 * z\nz = 3\n"
-  
-  same as:
   "x = 1\ny = 2\nz = 3\n"
 
   >>> gaussSolve [[3, 2, -1, 1], [2, -2, 4, -2], [-1, 1 % 2, -1, 0]] ["x", "y", "z"]
-  "x = 1\ny = 2\nz = 3\n"
+  "x = 1\ny = -2\nz = -2\n"
 
   >>> gaussSolve [ [3, 2, -1, 1] , [2, -2, 4, -2] , [-1, 1 % 2, -1, 0] ] ["x", "y", "z"]
   "x = 1\ny = -2\nz = -2\n"
 
   >>> gaussSolve [[1, 1, 2], [2, 2, 5]] ["x", "y"]
-  "System is inconsistent\n"
+  "System is inconsistent"
 
   >>> gaussSolve [ [1, 1, 1, 6] , [2, 2, 2, 12] , [3, 3, 3, 18] ] ["x", "y", "z"]
   "System has infinite solutions. One of them is\nx = 6 - 1 * y - 1 * z\n"
