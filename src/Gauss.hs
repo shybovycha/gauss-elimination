@@ -2,11 +2,8 @@ module Gauss where
 
 import Fraction
 import Map
+import Matrix
 import Set
-
-type Row = [Fraction]
-
-type Matrix = [Row]
 
 data Solution = Simple Matrix | Infinite Matrix | Inconsistent
 
