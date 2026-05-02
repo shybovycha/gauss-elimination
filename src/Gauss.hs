@@ -20,21 +20,8 @@ Overall algorithm:
 3. Do the same from bottom to the top
 -}
 
-quicksort :: (Ord a) => [a] -> (a -> a -> Int) -> [a]
-quicksort [] _ = []
-quicksort (x : xs) cmp = (quicksort lesser cmp) ++ [x] ++ (quicksort greater cmp)
-  where
-    lesser = [i | i <- xs, (cmp x i) < 0]
-    greater = [i | i <- xs, (cmp x i) >= 0]
-
-leadingZeros :: Row -> Int
-leadingZeros = length . takeWhile (== 0)
-
-gaussCompareRows :: Row -> Row -> Int
-gaussCompareRows r1 r2 = leadingZeros r2 - leadingZeros r1
-
 gaussSortMatrix :: Matrix -> Matrix
-gaussSortMatrix = flip quicksort gaussCompareRows
+gaussSortMatrix = flip quicksort compareRows
 
 -- gaussConvertMatrix :: [[Fraction]] -> Matrix
 -- gaussConvertMatrix = map (map fromInteger)

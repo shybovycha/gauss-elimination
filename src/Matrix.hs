@@ -36,3 +36,16 @@ addRows = zipWith (+)
 -}
 multiplyRow :: Row -> Fraction -> Row
 multiplyRow r s = map (* s) r
+
+quicksort :: (Ord a) => [a] -> (a -> a -> Int) -> [a]
+quicksort [] _ = []
+quicksort (x : xs) cmp = (quicksort lesser cmp) ++ [x] ++ (quicksort greater cmp)
+  where
+    lesser = [i | i <- xs, (cmp x i) < 0]
+    greater = [i | i <- xs, (cmp x i) >= 0]
+
+leadingZeros :: Row -> Int
+leadingZeros = length . takeWhile (== 0)
+
+compareRows :: Row -> Row -> Int
+compareRows r1 r2 = leadingZeros r2 - leadingZeros r1
