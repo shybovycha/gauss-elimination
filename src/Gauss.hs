@@ -45,7 +45,7 @@ gaussMakeZero r1 r2 = case dropWhile ((== 0) . fst) (zip r1 r2) of
   [] -> r2
   ((r1_head, r2_head) : _) ->
     let factor = -r2_head / r1_head
-    in zipWith (\a b -> a * factor + b) r1 r2
+    in addRows (multiplyRow r1 factor) r2
 
 -- apply the "zeroing head" operation to all the rows except the first one.
 -- do this recursively for every row
