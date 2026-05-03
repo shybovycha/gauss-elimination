@@ -59,5 +59,8 @@ quicksort (x : xs) cmp = (quicksort lesser cmp) ++ [x] ++ (quicksort greater cmp
 leadingZeros :: Row -> Int
 leadingZeros = length . takeWhile (== 0) . coeffList . coefficients
 
+dropLeadingZeros :: Row -> [Fraction]
+dropLeadingZeros = dropWhile (== 0) . coeffList . coefficients
+
 compareRows :: Row -> Row -> Int
 compareRows r1 r2 = leadingZeros r2 - leadingZeros r1

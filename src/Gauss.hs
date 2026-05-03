@@ -57,9 +57,9 @@ gaussReduceBack = reverse . gaussReduceBack' . reverse
 gaussFixCoefficients :: Matrix -> Matrix
 gaussFixCoefficients = map normalize
   where
-    normalize r = case dropWhile (== 0) (coeffList (coefficients r)) of
+    normalize r = case dropLeadingZeros r of
       [] -> r
-      (pivot : _) -> Row (Coefficients (map (/ pivot) (coeffList (coefficients r)))) (freeMember r / pivot)
+      (pivot : _) -> multiplyRow r (1 / pivot)
 
 {-|
   converts the matrix row reduced by the Gauss algorithm down to few members to string representation of a result.
@@ -77,6 +77,21 @@ gaussFixCoefficients = map normalize
   3x1 + 4x2 = 5
   3x1 = 5 - 4x2
   x1 = (5 - 4x2) / 3
+
+  Only one variable has a non-zero coefficient:
+
+  >>> showVariableValues (fromList [0, 0, 5, 10]) [Variable "x", Variable "y", Variable "z"]
+  "z = 2"
+
+  Pivot is not the first variable (leading zeros skip variables):
+
+  >>> showVariableValues (fromList [0, 3, 2, 7]) [Variable "x", Variable "y", Variable "z"]
+  "y = 7/3 - 2 * z"
+
+  Single variable in the system:
+
+  >>> showVariableValues (fromList [4, 12]) [Variable "x"]
+  "x = 3"
 -}
 showVariableValues :: Row -> [Variable] -> String
 showVariableValues r var_names
