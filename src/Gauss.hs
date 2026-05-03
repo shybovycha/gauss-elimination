@@ -5,6 +5,11 @@ import Map
 import Matrix
 import Set
 
+newtype Variable = Variable { name :: String } deriving (Eq, Ord)
+
+instance Show Variable where
+  show (Variable s) = show s
+
 data Solution = Simple Matrix | Infinite Matrix | Inconsistent
 
 instance Show Solution where
@@ -64,7 +69,7 @@ gaussFixCoefficients = map normalize
   if a row contains exactly two numbers, the resulting variable is the free member (last number) over the last coefficient (the first number).
   if a row contains more numbers, then a simple conversion will be made:
 
-  >>> showVariableValues (fromList [3, 4, 5]) ["x1", "x2"]
+  >>> showVariableValues (fromList [3, 4, 5]) [Variable "x1", Variable "x2"]
   "x1 = 5/3 - 4 * x2"
 
   same as:
@@ -73,7 +78,7 @@ gaussFixCoefficients = map normalize
   3x1 = 5 - 4x2
   x1 = (5 - 4x2) / 3
 -}
-showVariableValues :: Row -> [String] -> String
+showVariableValues :: Row -> [Variable] -> String
 showVariableValues r var_names
   | not (null other_coefficients) = var_str ++ other_vars_str
   | otherwise = var_str
@@ -85,10 +90,10 @@ showVariableValues r var_names
     elements_count = length cs
     other_coefficients = filter (\(k, k_idx) -> k /= 0 && k_idx /= index) (zip cs [0 .. elements_count])
     subtract_coefficient k = if k < 0 then " + " ++ show (- k) else " - " ++ show k
-    other_vars_str = concatMap (\(k, k_idx) -> subtract_coefficient k ++ " * " ++ (var_names !! k_idx)) other_coefficients
-    var_str = (var_names !! index) ++ " = " ++ show (value / coefficient)
+    other_vars_str = concatMap (\(k, k_idx) -> subtract_coefficient k ++ " * " ++ name (var_names !! k_idx)) other_coefficients
+    var_str = name (var_names !! index) ++ " = " ++ show (value / coefficient)
 
-gaussExtractResults :: Matrix -> [String] -> String
+gaussExtractResults :: Matrix -> [Variable] -> String
 gaussExtractResults rows var_names = foldl (\acc row -> acc ++ showVariableValues row var_names ++ "\n") "" rows
 
 isZeroRow :: Row -> Bool
@@ -111,7 +116,7 @@ gaussSolveMatrix mat
       (r : _) -> length (coeffList (coefficients r))
       [] -> 0
 
-extractAndWrapResults :: Solution -> [String] -> String
+extractAndWrapResults :: Solution -> [Variable] -> String
 extractAndWrapResults Inconsistent _ = "System is inconsistent"
 extractAndWrapResults (Simple res) var_names = gaussExtractResults res var_names
 extractAndWrapResults (Infinite res) var_names = "System has infinite solutions. One of them is\n" ++ gaussExtractResults res var_names
@@ -119,25 +124,25 @@ extractAndWrapResults (Infinite res) var_names = "System has infinite solutions.
 {-|
   Solve a system of linear equations:
 
-  >>> gaussSolve [fromList [2, 3, 8], fromList [1, -1, 1]] ["x", "y"]
+  >>> gaussSolve [fromList [2, 3, 8], fromList [1, -1, 1]] [Variable "x", Variable "y"]
   "x = 11/5\ny = 6/5\n"
 
-  >>> gaussSolve [fromList [1, 1, 1, 6], fromList [2, -1, 1, 3], fromList [1, 2, -1, 2]] ["x", "y", "z"]
+  >>> gaussSolve [fromList [1, 1, 1, 6], fromList [2, -1, 1, 3], fromList [1, 2, -1, 2]] [Variable "x", Variable "y", Variable "z"]
   "x = 1\ny = 2\nz = 3\n"
 
-  >>> gaussSolve [fromList [3, 2, -1, 1], fromList [2, -2, 4, -2], fromList [-1, 1 % 2, -1, 0]] ["x", "y", "z"]
+  >>> gaussSolve [fromList [3, 2, -1, 1], fromList [2, -2, 4, -2], fromList [-1, 1 % 2, -1, 0]] [Variable "x", Variable "y", Variable "z"]
   "x = 1\ny = -2\nz = -2\n"
 
-  >>> gaussSolve [ fromList [3, 2, -1, 1] , fromList [2, -2, 4, -2] , fromList [-1, 1 % 2, -1, 0] ] ["x", "y", "z"]
+  >>> gaussSolve [ fromList [3, 2, -1, 1] , fromList [2, -2, 4, -2] , fromList [-1, 1 % 2, -1, 0] ] [Variable "x", Variable "y", Variable "z"]
   "x = 1\ny = -2\nz = -2\n"
 
-  >>> gaussSolve [fromList [1, 1, 2], fromList [2, 2, 5]] ["x", "y"]
+  >>> gaussSolve [fromList [1, 1, 2], fromList [2, 2, 5]] [Variable "x", Variable "y"]
   "System is inconsistent"
 
-  >>> gaussSolve [ fromList [1, 1, 1, 6] , fromList [2, 2, 2, 12] , fromList [3, 3, 3, 18] ] ["x", "y", "z"]
+  >>> gaussSolve [ fromList [1, 1, 1, 6] , fromList [2, 2, 2, 12] , fromList [3, 3, 3, 18] ] [Variable "x", Variable "y", Variable "z"]
   "System has infinite solutions. One of them is\nx = 6 - 1 * y - 1 * z\n"
 -}
-gaussSolve :: Matrix -> [String] -> String
+gaussSolve :: Matrix -> [Variable] -> String
 gaussSolve = extractAndWrapResults . gaussSolveMatrix
 
 extractVariableNames :: [([(Fraction, String)], Fraction)] -> [String]
@@ -149,8 +154,8 @@ extractFreeMembers = map snd
 mapVariablesToFactors :: [([(Fraction, String)], Fraction)] -> [Map String Fraction]
 mapVariablesToFactors = map (\(equation, _) -> foldl (\acc (factor, var) -> Map.put acc var factor) emptyMap equation)
 
-convertEquationToMatrix :: [([(Fraction, String)], Fraction)] -> (Matrix, [String])
-convertEquationToMatrix equations = (matrixView, variableNames)
+convertEquationToMatrix :: [([(Fraction, String)], Fraction)] -> (Matrix, [Variable])
+convertEquationToMatrix equations = (matrixView, map Variable variableNames)
   where
     variableNames = extractVariableNames equations
     mapView = mapVariablesToFactors equations
