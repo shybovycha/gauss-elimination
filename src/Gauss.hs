@@ -28,7 +28,7 @@ gaussSortMatrix = flip quicksort compareRows
 
 -- here, guaranteed that r1 has less leading zeros than r2
 gaussMakeZero :: Row -> Row -> Row
-gaussMakeZero r1 r2 = case dropWhile ((== 0) . fst) (zip (toList r1) (toList r2)) of
+gaussMakeZero r1 r2 = case dropWhile ((== 0) . fst) (zip (coeffList (coefficients r1)) (coeffList (coefficients r2))) of
   [] -> r2
   ((r1_head, r2_head) : _) ->
     let factor = -r2_head / r1_head
@@ -52,9 +52,9 @@ gaussReduceBack = reverse . gaussReduceBack' . reverse
 gaussFixCoefficients :: Matrix -> Matrix
 gaussFixCoefficients = map normalize
   where
-    normalize r = case dropWhile (== 0) (toList r) of
+    normalize r = case dropWhile (== 0) (coeffList (coefficients r)) of
       [] -> r
-      (pivot : _) -> Row (map (/ pivot) (toList r))
+      (pivot : _) -> Row (Coefficients (map (/ pivot) (coeffList (coefficients r)))) (freeMember r / pivot)
 
 {-|
   converts the matrix row reduced by the Gauss algorithm down to few members to string representation of a result.
@@ -64,7 +64,7 @@ gaussFixCoefficients = map normalize
   if a row contains exactly two numbers, the resulting variable is the free member (last number) over the last coefficient (the first number).
   if a row contains more numbers, then a simple conversion will be made:
 
-  >>> showVariableValues (Row [3, 4, 5]) ["x1", "x2"]
+  >>> showVariableValues (fromList [3, 4, 5]) ["x1", "x2"]
   "x1 = 5/3 - 4 * x2"
 
   same as:
@@ -78,13 +78,12 @@ showVariableValues r var_names
   | not (null other_coefficients) = var_str ++ other_vars_str
   | otherwise = var_str
   where
-    rl = toList r
+    cs = coeffList (coefficients r)
     index = leadingZeros r
-    coefficient = rl !! index
-    value = last rl
-    raw_row = init rl -- row coefficients without the free member
-    elements_count = length raw_row
-    other_coefficients = filter (\(k, k_idx) -> k /= 0 && k_idx /= index) (zip raw_row [0 .. elements_count])
+    coefficient = cs !! index
+    value = freeMember r
+    elements_count = length cs
+    other_coefficients = filter (\(k, k_idx) -> k /= 0 && k_idx /= index) (zip cs [0 .. elements_count])
     subtract_coefficient k = if k < 0 then " + " ++ show (- k) else " - " ++ show k
     other_vars_str = concatMap (\(k, k_idx) -> subtract_coefficient k ++ " * " ++ (var_names !! k_idx)) other_coefficients
     var_str = (var_names !! index) ++ " = " ++ show (value / coefficient)
@@ -93,11 +92,10 @@ gaussExtractResults :: Matrix -> [String] -> String
 gaussExtractResults rows var_names = foldl (\acc row -> acc ++ showVariableValues row var_names ++ "\n") "" rows
 
 isZeroRow :: Row -> Bool
-isZeroRow = all (== 0) . toList
+isZeroRow (Row (Coefficients cs) f) = all (== 0) cs && f == 0
 
 isInconsistentRow :: Row -> Bool
-isInconsistentRow (Row [])  = False
-isInconsistentRow (Row row) = all (== 0) (init row) && last row /= 0
+isInconsistentRow (Row (Coefficients cs) f) = all (== 0) cs && f /= 0
 
 gaussSolveMatrix :: Matrix -> Solution
 gaussSolveMatrix mat
@@ -110,7 +108,7 @@ gaussSolveMatrix mat
     m3 = reverse m2
     pivots = filter (not . isZeroRow) m2
     numVars = case mat of
-      (r : _) -> length (toList r) - 1
+      (r : _) -> length (coeffList (coefficients r))
       [] -> 0
 
 extractAndWrapResults :: Solution -> [String] -> String
@@ -121,22 +119,22 @@ extractAndWrapResults (Infinite res) var_names = "System has infinite solutions.
 {-|
   Solve a system of linear equations:
 
-  >>> gaussSolve [Row [2, 3, 8], Row [1, -1, 1]] ["x", "y"]
+  >>> gaussSolve [fromList [2, 3, 8], fromList [1, -1, 1]] ["x", "y"]
   "x = 11/5\ny = 6/5\n"
 
-  >>> gaussSolve [Row [1, 1, 1, 6], Row [2, -1, 1, 3], Row [1, 2, -1, 2]] ["x", "y", "z"]
+  >>> gaussSolve [fromList [1, 1, 1, 6], fromList [2, -1, 1, 3], fromList [1, 2, -1, 2]] ["x", "y", "z"]
   "x = 1\ny = 2\nz = 3\n"
 
-  >>> gaussSolve [Row [3, 2, -1, 1], Row [2, -2, 4, -2], Row [-1, 1 % 2, -1, 0]] ["x", "y", "z"]
+  >>> gaussSolve [fromList [3, 2, -1, 1], fromList [2, -2, 4, -2], fromList [-1, 1 % 2, -1, 0]] ["x", "y", "z"]
   "x = 1\ny = -2\nz = -2\n"
 
-  >>> gaussSolve [ Row [3, 2, -1, 1] , Row [2, -2, 4, -2] , Row [-1, 1 % 2, -1, 0] ] ["x", "y", "z"]
+  >>> gaussSolve [ fromList [3, 2, -1, 1] , fromList [2, -2, 4, -2] , fromList [-1, 1 % 2, -1, 0] ] ["x", "y", "z"]
   "x = 1\ny = -2\nz = -2\n"
 
-  >>> gaussSolve [Row [1, 1, 2], Row [2, 2, 5]] ["x", "y"]
+  >>> gaussSolve [fromList [1, 1, 2], fromList [2, 2, 5]] ["x", "y"]
   "System is inconsistent"
 
-  >>> gaussSolve [ Row [1, 1, 1, 6] , Row [2, 2, 2, 12] , Row [3, 3, 3, 18] ] ["x", "y", "z"]
+  >>> gaussSolve [ fromList [1, 1, 1, 6] , fromList [2, 2, 2, 12] , fromList [3, 3, 3, 18] ] ["x", "y", "z"]
   "System has infinite solutions. One of them is\nx = 6 - 1 * y - 1 * z\n"
 -}
 gaussSolve :: Matrix -> [String] -> String
@@ -158,4 +156,4 @@ convertEquationToMatrix equations = (matrixView, variableNames)
     mapView = mapVariablesToFactors equations
     freeMembers = extractFreeMembers equations
     mapWithFreeView = zip mapView freeMembers
-    matrixView = map (\(equationMap, free) -> Row ((map (\var -> maybe 0 id (Map.get equationMap var)) variableNames) ++ [free])) mapWithFreeView
+    matrixView = map (\(equationMap, free) -> Row (Coefficients (map (\var -> maybe 0 id (Map.get equationMap var)) variableNames)) free) mapWithFreeView
