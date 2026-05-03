@@ -70,7 +70,7 @@ gaussFixCoefficients = map normalize
   if a row contains more numbers, then a simple conversion will be made:
 
   >>> showVariableValues (fromList [3, 4, 5]) [Variable "x1", Variable "x2"]
-  "x1 = 5/3 - 4 * x2"
+  "x1 = 5/3 - 4/3 * x2"
 
   same as:
 
@@ -83,10 +83,10 @@ gaussFixCoefficients = map normalize
   >>> showVariableValues (fromList [0, 0, 5, 10]) [Variable "x", Variable "y", Variable "z"]
   "z = 2"
 
-  Pivot is not the first variable (leading zeros skip variables):
+  Pivot is not the first variable (zero coefficients skip variables in the output):
 
   >>> showVariableValues (fromList [0, 3, 2, 7]) [Variable "x", Variable "y", Variable "z"]
-  "y = 7/3 - 2 * z"
+  "y = 7/3 - 2/3 * z"
 
   Single variable in the system:
 
@@ -95,18 +95,18 @@ gaussFixCoefficients = map normalize
 -}
 showVariableValues :: Row -> [Variable] -> String
 showVariableValues r var_names
-  | not (null other_coefficients) = var_str ++ other_vars_str
-  | otherwise = var_str
+  | null normalized_cs = pivot_str
+  | otherwise = pivot_str ++ normalized_cs_str
   where
     cs = coeffList (coefficients r)
-    index = leadingZeros r
-    coefficient = cs !! index
-    value = freeMember r
-    elements_count = length cs
-    other_coefficients = filter (\(k, k_idx) -> k /= 0 && k_idx /= index) (zip cs [0 .. elements_count])
-    subtract_coefficient k = if k < 0 then " + " ++ show (- k) else " - " ++ show k
-    other_vars_str = concatMap (\(k, k_idx) -> subtract_coefficient k ++ " * " ++ name (var_names !! k_idx)) other_coefficients
-    var_str = name (var_names !! index) ++ " = " ++ show (value / coefficient)
+    cs_vs = zip cs var_names
+    nonzero_cs = filter (\(k, _) -> k /= 0) cs_vs
+    (pivot_k, pivot_s) = head nonzero_cs
+    normalized_cs = map (\(k, s) -> (-k / pivot_k, s)) (tail nonzero_cs)
+    normalized_f = (freeMember r) / pivot_k
+    pivot_str = (name pivot_s) ++ " = " ++ show normalized_f
+    sign k = if k < 0 then " - " else " + "
+    normalized_cs_str = concatMap (\(k, s) -> sign k ++ (show (abs k)) ++ " * " ++ name s) normalized_cs
 
 gaussExtractResults :: Matrix -> [Variable] -> String
 gaussExtractResults rows var_names = foldl (\acc row -> acc ++ showVariableValues row var_names ++ "\n") "" rows
